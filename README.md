@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Inter&weight=900&size=60&pause=1000&color=00F2FF&center=true&vCenter=true&width=800&lines=SOKET.IO;UNIFIED+SOCKET+INFRASTRUCTURE" alt="Soket.io Header" />
+  <img src="https://capsule-render.vercel.app/render?type=soft&color=050505&height=120&section=header&text=SOKET.IO&fontSize=70&fontColor=00f2ff&animation=twinkling" alt="Soket.io Header" />
 </p>
 
 <p align="center">
