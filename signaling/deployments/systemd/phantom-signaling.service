@@ -1,0 +1,10 @@
+﻿[Unit]
+Description=Phantom Signaling Service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/phantom-signaling
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

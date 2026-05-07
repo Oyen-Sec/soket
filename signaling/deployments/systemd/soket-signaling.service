@@ -1,0 +1,10 @@
+﻿[Unit]
+Description=Soket Signaling Service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/soket-signaling
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

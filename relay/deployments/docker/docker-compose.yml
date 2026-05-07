@@ -1,0 +1,6 @@
+﻿version: '3.8'
+services:
+  phantom-relay:
+    build: .
+    ports:
+      - '4433:4433'

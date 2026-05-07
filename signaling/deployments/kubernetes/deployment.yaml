@@ -1,0 +1,17 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phantom-signaling
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phantom-signaling
+  template:
+    metadata:
+      labels:
+        app: phantom-signaling
+    spec:
+      containers:
+      - name: phantom-signaling
+        image: phantom-signaling:latest

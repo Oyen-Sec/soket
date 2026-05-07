@@ -1,0 +1,10 @@
+﻿[Unit]
+Description=Soket Relay Service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/soket-relay
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

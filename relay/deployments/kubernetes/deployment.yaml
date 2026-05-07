@@ -1,0 +1,17 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phantom-relay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phantom-relay
+  template:
+    metadata:
+      labels:
+        app: phantom-relay
+    spec:
+      containers:
+      - name: phantom-relay
+        image: phantom-relay:latest
