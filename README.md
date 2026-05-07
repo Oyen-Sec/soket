@@ -1,7 +1,10 @@
-# SOKET.IO v1.0 | UNIFIED SOCKET INFRASTRUCTURE
+<p align="center">
+  <img src="https://readme-typing-svg.herokuapp.com?font=Inter&weight=900&size=60&pause=1000&color=00F2FF&center=true&vCenter=true&width=800&lines=SOKET.IO;UNIFIED+SOCKET+INFRASTRUCTURE" alt="Soket.io Header" />
+</p>
 
 <p align="center">
-  <img src="https://capsule-render.vercel.app/render?type=soft&color=00f2ff&height=200&section=header&text=SOKET.IO&fontSize=90&animation=fadeIn&fontAlignY=38" alt="Soket.io Header" />
+  <img src="https://img.shields.io/badge/V1.0_STANDARD-222222?style=for-the-badge" alt="V1.0 Standard" />
+  <img src="https://img.shields.io/badge/ACTIVE-00f2ff?style=for-the-badge&logoColor=black" alt="Active" />
 </p>
 
 Soket.io is a high-performance C2 infrastructure engineered for absolute resilience, stealth communication, and kernel-level monitoring. This framework provides a hardened layer for advanced operations with a zero-trace forensic footprint.
@@ -63,7 +66,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Oyen-Sec/soket/main/depl
 **Manual Static Build**
 ```bash
 # Agent compilation
-cd client && make clean && make prod
+cd client && make clean && make
 
 # Relay compilation
 cd relay && CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/phantom-relay cmd/relay/main.go

@@ -60,7 +60,7 @@ int ph_stealth_block_ptrace(void);
 int ph_stealth_detect_parent_process(ph_stealth_ctx_t *ctx);
 
 int ph_stealth_detect_vm(ph_vm_info_t *vm_info, int check_flags);
-int ph_stealth_check_dmi_product(ph_vm_info_t *vm_info);
+int ph_stealth_check_dmi_uct(ph_vm_info_t *vm_info);
 int ph_stealth_check_cpu_hypervisor(ph_vm_info_t *vm_info);
 int ph_stealth_check_proc_cpuinfo(ph_vm_info_t *vm_info);
 

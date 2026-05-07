@@ -38,7 +38,7 @@ int ph_tls_init(ph_tls_ctx_t *ctx, int socket_fd, const char *sni_domain)
     memset(ctx, 0, sizeof(ph_tls_ctx_t));
     ctx->socket_fd = socket_fd;
 
-    // Production: Initialize with NO certificate verification for self-signed relay compatibility
+    // : Initialize with NO certificate verification for self-signed relay compatibility
     br_ssl_client_init_full(&ctx->sc, &ctx->xc, NULL, 0);
     
     // Set engine buffer

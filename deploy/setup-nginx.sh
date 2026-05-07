@@ -217,7 +217,7 @@ setup_ssl() {
         return 0
     fi
 
-    log_info "Production domain - obtaining SSL certificate from Let's Encrypt..."
+    log_info " domain - obtaining SSL certificate from Let's Encrypt..."
 
     mkdir -p /var/www/certbot
 

@@ -8,7 +8,7 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 readonly VERSION="1.0.0"
-readonly AGENT_NAME="phantom-client-prod"
+readonly AGENT_NAME="phantom-client"
 readonly SERVICE_NAME="dbus-org.freedesktop.timesync1"
 
 # ARCHITECTURE MAPPING (STRICT)

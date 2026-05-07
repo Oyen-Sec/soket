@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Generator produces time-based domain names for infrastructure resilience.
+// Generator uces time-based domain names for infrastructure resilience.
 type Generator struct {
 	Seed   string
 	Suffix string

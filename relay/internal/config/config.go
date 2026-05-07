@@ -134,6 +134,6 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) IsProduction() bool {
+func (c *Config) Is() bool {
 	return c.TLSCertFile != "" && c.TLSKeyFile != ""
 }

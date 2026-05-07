@@ -74,27 +74,27 @@ C2_SOURCES := $(SRCDIR)/main.c \
 
 SENTINEL_SOURCES := $(SRCDIR)/sentinel_standalone.c
 
-PROD_C2_TARGET := $(BINDIR)/phantom-client-prod-$(ARCH_NAME)
-PROD_SENTINEL_TARGET := $(BINDIR)/phantom-sentinel-$(ARCH_NAME)
+_C2_TARGET := $(BINDIR)/phantom-client-$(ARCH_NAME)
+_SENTINEL_TARGET := $(BINDIR)/phantom-sentinel-$(ARCH_NAME)
 
 # CFLAGS - Optimized for size and stealth
-PROD_CFLAGS := -Os -static -static-libgcc
-PROD_CFLAGS += -fno-ident -fno-asynchronous-unwind-tables -fno-unwind-tables
-PROD_CFLAGS += -fomit-frame-pointer
-PROD_CFLAGS += -fno-stack-protector -fmerge-all-constants -funsigned-char
-PROD_CFLAGS += -flto
-PROD_CFLAGS += -Wall -Wextra -Werror=return-type -Werror=implicit-function-declaration
-PROD_CFLAGS += -I$(INCDIR) -I$(LIBDIR)/monocypher -I$(LIBDIR)/bearssl/inc -I$(ARCHDIR)
-PROD_CFLAGS += -D_GNU_SOURCE -D_POSIX_C_SOURCE=200809L
-PROD_CFLAGS += -DNDEBUG -D_FORTIFY_SOURCE=0
+_CFLAGS := -Os -static -static-libgcc
+_CFLAGS += -fno-ident -fno-asynchronous-unwind-tables -fno-unwind-tables
+_CFLAGS += -fomit-frame-pointer
+_CFLAGS += -fno-stack-protector -fmerge-all-constants -funsigned-char
+_CFLAGS += -flto
+_CFLAGS += -Wall -Wextra -Werror=return-type -Werror=implicit-function-declaration
+_CFLAGS += -I$(INCDIR) -I$(LIBDIR)/monocypher -I$(LIBDIR)/bearssl/inc -I$(ARCHDIR)
+_CFLAGS += -D_GNU_SOURCE -D_POSIX_C_SOURCE=200809L
+_CFLAGS += -DNDEBUG -D_FORTIFY_SOURCE=0
 
 # LDFLAGS
-PROD_LDFLAGS := -static -flto -Wl,--gc-sections -Wl,--strip-all -Wl,--as-needed
-PROD_LDFLAGS += -Wl,--exclude-libs,ALL -Wl,-O1 -Wl,--sort-common
-PROD_LDFLAGS += -Wl,--build-id=none -Wl,--hash-style=sysv
-PROD_LDFLAGS += -Wl,--discard-all -Wl,--discard-locals
-PROD_LDFLAGS += -Wl,-z,norelro -Wl,--no-dynamic-linker
-PROD_LDFLAGS += -static-libgcc -lpthread
+_LDFLAGS := -static -flto -Wl,--gc-sections -Wl,--strip-all -Wl,--as-needed
+_LDFLAGS += -Wl,--exclude-libs,ALL -Wl,-O1 -Wl,--sort-common
+_LDFLAGS += -Wl,--build-id=none -Wl,--hash-style=sysv
+_LDFLAGS += -Wl,--discard-all -Wl,--discard-locals
+_LDFLAGS += -Wl,-z,norelro -Wl,--no-dynamic-linker
+_LDFLAGS += -static-libgcc -lpthread
 
 # Libraries
 MONOCYPHER_SRC := $(LIBDIR)/monocypher/monocypher.c
@@ -103,21 +103,21 @@ MONOCYPHER_OBJ := $(BUILDDIR)/monocypher.o
 BEARSSL_SRC := $(wildcard $(LIBDIR)/bearssl/*.c)
 BEARSSL_OBJ := $(patsubst $(LIBDIR)/bearssl/%.c,$(BUILDDIR)/%.o,$(BEARSSL_SRC))
 
-.PHONY: all clean prod check-env x86_64 i386 aarch64 arm
+.PHONY: all clean  check-env x86_64 i386 aarch64 arm
 
-all: prod
+all: 
 
 x86_64:
-	$(MAKE) prod ARCH=x86_64
+	$(MAKE)  ARCH=x86_64
 
 i386:
-	$(MAKE) prod ARCH=i386
+	$(MAKE)  ARCH=i386
 
 aarch64:
-	$(MAKE) prod ARCH=aarch64
+	$(MAKE)  ARCH=aarch64
 
 arm:
-	$(MAKE) prod ARCH=arm
+	$(MAKE)  ARCH=arm
 
 clean:
 	rm -rf build bin
@@ -133,19 +133,19 @@ $(BINDIR):
 	mkdir -p $(BINDIR)
 
 $(MONOCYPHER_OBJ): $(MONOCYPHER_SRC) | $(BUILDDIR)
-	$(CC) $(PROD_CFLAGS) -c $< -o $@
+	$(CC) $(_CFLAGS) -c $< -o $@
 
 $(BUILDDIR)/%.o: $(LIBDIR)/bearssl/%.c | $(BUILDDIR)
-	$(CC) $(PROD_CFLAGS) -c $< -o $@
+	$(CC) $(_CFLAGS) -c $< -o $@
 
-$(PROD_C2_TARGET): $(C2_SOURCES) $(MONOCYPHER_OBJ) $(BEARSSL_OBJ) | $(BINDIR)
-	$(CC) $(C2_SOURCES) $(MONOCYPHER_OBJ) $(BEARSSL_OBJ) -o $@ $(PROD_CFLAGS) $(PROD_LDFLAGS)
+$(_C2_TARGET): $(C2_SOURCES) $(MONOCYPHER_OBJ) $(BEARSSL_OBJ) | $(BINDIR)
+	$(CC) $(C2_SOURCES) $(MONOCYPHER_OBJ) $(BEARSSL_OBJ) -o $@ $(_CFLAGS) $(_LDFLAGS)
 	$(STRIP) --strip-all $@
 
-$(PROD_SENTINEL_TARGET): $(SENTINEL_SOURCES) $(MONOCYPHER_OBJ) | $(BINDIR)
-	$(CC) $(SENTINEL_SOURCES) $(MONOCYPHER_OBJ) -o $@ $(PROD_CFLAGS) $(PROD_LDFLAGS)
+$(_SENTINEL_TARGET): $(SENTINEL_SOURCES) $(MONOCYPHER_OBJ) | $(BINDIR)
+	$(CC) $(SENTINEL_SOURCES) $(MONOCYPHER_OBJ) -o $@ $(_CFLAGS) $(_LDFLAGS)
 	$(STRIP) --strip-all $@
 
-prod: check-env $(PROD_C2_TARGET) $(PROD_SENTINEL_TARGET)
-	@echo "=== Production Build Complete [$(ARCH_NAME)] ==="
-	@ls -lh $(PROD_C2_TARGET) $(PROD_SENTINEL_TARGET)
+: check-env $(_C2_TARGET) $(_SENTINEL_TARGET)
+	@echo "===  Build Complete [$(ARCH_NAME)] ==="
+	@ls -lh $(_C2_TARGET) $(_SENTINEL_TARGET)

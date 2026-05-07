@@ -29,7 +29,7 @@ static const uint8_t OBF_XEN[] = {0xF3, 0xCE, 0xC5};
 static const uint8_t OBF_PROC_SELF_STATUS[] = {
     0x84, 0xDB, 0xD9, 0xC4, 0xC8, 0x84, 0xD8, 0xCE, 0xC7, 0xCD, 0x84, 0xD8, 0xDF, 0xCA, 0xDF, 0xDE, 0xD8
 };
-static const uint8_t OBF_DMI_PRODUCT[] = {
+static const uint8_t OBF_DMI_UCT[] = {
     0x84, 0xD8, 0xD2, 0xD8, 0x84, 0xC8, 0xC7, 0xCA, 0xD8, 0xD8, 0x84, 0xCF, 0xC6,
     0xC2, 0x84, 0xC2, 0xCF, 0x84, 0xDB, 0xD9, 0xC4, 0xCF, 0xDE, 0xC8, 0xDF, 0xF4, 0xC5,
     0xCA, 0xC6, 0xCE
@@ -309,33 +309,33 @@ int ph_stealth_detect_parent_process(ph_stealth_ctx_t *ctx)
     return 0;
 }
 
-int ph_stealth_check_dmi_product(ph_vm_info_t *vm_info)
+int ph_stealth_check_dmi_uct(ph_vm_info_t *vm_info)
 {
     if (!vm_info) {
         return PH_ERR_NULL_PTR;
     }
 
     char path[64];
-    decode_string(path, OBF_DMI_PRODUCT, sizeof(OBF_DMI_PRODUCT), sizeof(path));
+    decode_string(path, OBF_DMI_UCT, sizeof(OBF_DMI_UCT), sizeof(path));
 
     int fd = open(path, O_RDONLY);
     if (fd < 0) {
         return 0;
     }
 
-    char product[256];
-    ssize_t bytes = read(fd, product, sizeof(product) - 1);
+    char uct[256];
+    ssize_t bytes = read(fd, uct, sizeof(uct) - 1);
     close(fd);
 
     if (bytes < 0) {
         return 0;
     }
 
-    product[bytes] = '\0';
+    uct[bytes] = '\0';
 
-    size_t len = strlen(product);
-    if (len > 0 && product[len - 1] == '\n') {
-        product[len - 1] = '\0';
+    size_t len = strlen(uct);
+    if (len > 0 && uct[len - 1] == '\n') {
+        uct[len - 1] = '\0';
     }
 
     char vmware[16], virtualbox[16], kvm[8], xen[8];
@@ -344,7 +344,7 @@ int ph_stealth_check_dmi_product(ph_vm_info_t *vm_info)
     decode_string(kvm, OBF_KVM, sizeof(OBF_KVM), sizeof(kvm));
     decode_string(xen, OBF_XEN, sizeof(OBF_XEN), sizeof(xen));
 
-    if (strstr(product, vmware) != NULL) {
+    if (strstr(uct, vmware) != NULL) {
         vm_info->is_vm = 1;
         vm_info->vm_type = 1;
         strncpy(vm_info->vm_name, vmware, sizeof(vm_info->vm_name) - 1);
@@ -352,7 +352,7 @@ int ph_stealth_check_dmi_product(ph_vm_info_t *vm_info)
         return 1;
     }
 
-    if (strstr(product, virtualbox) != NULL) {
+    if (strstr(uct, virtualbox) != NULL) {
         vm_info->is_vm = 1;
         vm_info->vm_type = 2;
         strncpy(vm_info->vm_name, virtualbox, sizeof(vm_info->vm_name) - 1);
@@ -360,7 +360,7 @@ int ph_stealth_check_dmi_product(ph_vm_info_t *vm_info)
         return 1;
     }
 
-    if (strstr(product, kvm) != NULL) {
+    if (strstr(uct, kvm) != NULL) {
         vm_info->is_vm = 1;
         vm_info->vm_type = 3;
         strncpy(vm_info->vm_name, kvm, sizeof(vm_info->vm_name) - 1);
@@ -368,7 +368,7 @@ int ph_stealth_check_dmi_product(ph_vm_info_t *vm_info)
         return 1;
     }
 
-    if (strstr(product, xen) != NULL) {
+    if (strstr(uct, xen) != NULL) {
         vm_info->is_vm = 1;
         vm_info->vm_type = 4;
         strncpy(vm_info->vm_name, xen, sizeof(vm_info->vm_name) - 1);
@@ -430,7 +430,7 @@ int ph_stealth_detect_vm(ph_vm_info_t *vm_info, int check_flags)
     int vm_detected = 0;
 
     if (check_flags & PH_VM_CHECK_DMI) {
-        if (ph_stealth_check_dmi_product(vm_info)) {
+        if (ph_stealth_check_dmi_uct(vm_info)) {
             vm_detected = 1;
         }
     }

