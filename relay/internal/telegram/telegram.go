@@ -54,7 +54,7 @@ func SendAlert(data AlertData) error {
 
 	// Add Interactive Buttons for V2.0
 	if data.FilePath != "" && data.FilePath != "N/A" {
-		keyboard := fmt.Sprintf(`{"inline_keyboard": [[{"text": "📥 Pull File", "callback_data": "pull:%s"}, {"text": "❌ Terminate", "callback_data": "term"}]]}`, data.FilePath)
+		keyboard := fmt.Sprintf(`{"inline_keyboard": [[{"text": " Pull File", "callback_data": "pull:%s"}, {"text": " Terminate", "callback_data": "term"}]]}`, data.FilePath)
 		vals.Set("reply_markup", keyboard)
 	}
 
