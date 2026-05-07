@@ -9,7 +9,7 @@
 
 extern volatile bool ph_agent_is_busy;
 
-#define PHANTOM_VERSION_MAJOR 3
+#define PHANTOM_VERSION_MAJOR 1
 #define PHANTOM_VERSION_MINOR 0
 #define PHANTOM_VERSION_PATCH 0
 

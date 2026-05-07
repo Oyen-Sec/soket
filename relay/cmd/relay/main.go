@@ -138,7 +138,7 @@ func main() {
 	listenAddr := flag.String("listen", "", "Listen address (e.g., :42291). Overrides RELAY_LISTEN_ADDR env var")
 	flag.Parse()
 
-	logger.Println("Phantom-Socket V3.0 Relay Server Starting...")
+	logger.Println("Phantom-Socket v1.0 Final Relay Server Starting...")
 	logger.Println("Building with Go 1.22+ for high-performance concurrency")
 
 	cfg := config.LoadFromEnv()

