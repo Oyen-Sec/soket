@@ -69,7 +69,8 @@ C2_SOURCES := $(SRCDIR)/main.c \
               $(SRCDIR)/dns_resolver.c \
               $(SRCDIR)/memfd_loader.c \
               $(SRCDIR)/security_module_detect.c \
-              $(SRCDIR)/syscall_ports.c
+              $(SRCDIR)/syscall_ports.c \
+              $(SRCDIR)/anti_vm.c
 
 SENTINEL_SOURCES := $(SRCDIR)/sentinel_standalone.c
 

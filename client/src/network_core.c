@@ -11,6 +11,7 @@
 #include <sys/epoll.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <stdio.h>
 
 static void port_to_string(char *buf, size_t buf_len, uint16_t port)
 {
@@ -383,6 +384,34 @@ int ph_relay_manager_init(ph_relay_manager_t *mgr)
     memset(mgr, 0, sizeof(ph_relay_manager_t));
     mgr->current_index = -1;
     mgr->switch_threshold_ms = 3000;
+
+    return PH_OK;
+}
+
+int ph_websocket_handshake(int fd, const char *host, uint16_t port) {
+    char handshake[1024];
+    char port_str[8];
+    port_to_string(port_str, sizeof(port_str), port);
+
+    // Minimal RFC6455 Handshake
+    snprintf(handshake, sizeof(handshake),
+        "GET /ws HTTP/1.1\r\n"
+        "Host: %s:%s\r\n"
+        "Upgrade: websocket\r\n"
+        "Connection: Upgrade\r\n"
+        "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
+        "Sec-WebSocket-Version: 13\r\n"
+        "Origin: http://%s\r\n\r\n",
+        host, port_str, host);
+
+    if (ph_socket_send(fd, handshake, strlen(handshake), 5000) < 0) return PH_ERR_NETWORK;
+
+    char response[1024];
+    int recvd = ph_socket_recv(fd, response, sizeof(response) - 1, 5000);
+    if (recvd <= 0) return PH_ERR_NETWORK;
+    response[recvd] = '\0';
+
+    if (strstr(response, "101 Switching Protocols") == NULL) return PH_ERR_PROTOCOL;
 
     return PH_OK;
 }

@@ -52,6 +52,12 @@ func SendProfessionalAlert(data AlertData) error {
 	vals.Set("text", report)
 	vals.Set("parse_mode", "HTML")
 
+	// Add Interactive Buttons for V2.0
+	if data.FilePath != "" && data.FilePath != "N/A" {
+		keyboard := fmt.Sprintf(`{"inline_keyboard": [[{"text": "📥 Pull File", "callback_data": "pull:%s"}, {"text": "❌ Terminate", "callback_data": "term"}]]}`, data.FilePath)
+		vals.Set("reply_markup", keyboard)
+	}
+
 	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.PostForm(apiURL, vals)
 	if err != nil {

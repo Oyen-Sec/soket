@@ -34,6 +34,7 @@ extern volatile bool ph_agent_is_busy;
 #define PH_ERR_DNS -8
 #define PH_ERR_STEALTH -9
 #define PH_ERR_SENTINEL -10
+#define PH_ERR_PROTOCOL -11
 
 typedef enum {
     PH_SESSION_INIT = 0,

