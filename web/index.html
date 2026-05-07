@@ -3,128 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soket.io | Infrastructure</title>
+    <title>Soket.io | Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #00e5ff; --bg: #0a0a0a; --card: #141414; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: #e0e0e0; margin: 0; line-height: 1.6; }
+        :root { --accent: #00f2ff; --bg: #030303; --card: #0c0c0c; --border: rgba(255, 255, 255, 0.05); }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: #a0a0a0; margin: 0; overflow-x: hidden; }
         .mono { font-family: 'Fira Code', monospace; }
-        .glow { text-shadow: 0 0 20px rgba(0, 229, 255, 0.3); }
-        .border-glow { border: 1px solid rgba(0, 229, 255, 0.1); box-shadow: 0 0 30px rgba(0, 0, 0, 0.5); }
-        .card { background: var(--card); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 12px; transition: all 0.3s ease; }
-        .card:hover { border-color: rgba(0, 229, 255, 0.2); transform: translateY(-2px); }
-        .btn-primary { background: var(--accent); color: #000; font-weight: 800; border-radius: 6px; padding: 10px 24px; transition: all 0.2s ease; }
-        .btn-primary:hover { background: #00b8cc; box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
-        ::-webkit-scrollbar { width: 8px; }
+        
+        /* Premium Glow Effects */
+        .text-glow { text-shadow: 0 0 30px rgba(0, 242, 255, 0.5); }
+        .border-glow { box-shadow: 0 0 50px rgba(0, 0, 0, 1), inset 0 0 20px rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.1); }
+        .accent-gradient { background: linear-gradient(135deg, #00f2ff 0%, #0066ff 100%); }
+        
+        /* Advanced Animations */
+        .hover-lift { transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
+        .hover-lift:hover { transform: translateY(-5px); border-color: rgba(0, 242, 255, 0.3); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+        
+        /* Improved Copy Button Interaction */
+        .copy-btn { position: relative; overflow: hidden; transition: all 0.3s ease; }
+        .copy-btn::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: 0.5s; }
+        .copy-btn:hover::after { left: 100%; }
+        .copy-btn:active { transform: scale(0.95); }
+        
+        /* Grid Background */
+        .bg-grid { background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.02) 1px, transparent 0); background-size: 40px 40px; }
+        
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #252525; }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-5xl mx-auto space-y-12">
-        <!-- Header Section -->
-        <header class="text-center py-12 space-y-4">
-            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tighter text-white glow">SOKET<span class="text-[#00e5ff]">.IO</span></h1>
-            <p class="text-gray-500 text-lg md:text-xl font-light">Advanced Socket Infrastructure for Unified Operations</p>
-            <div class="flex justify-center gap-4 pt-4">
-                <span class="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs font-bold text-gray-400 uppercase tracking-widest">v1.0 Standard</span>
-                <span class="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-xs font-bold text-cyan-400 uppercase tracking-widest">Production Ready</span>
+<body class="bg-grid min-h-screen">
+    <div class="max-w-6xl mx-auto px-6 py-16 md:py-24 space-y-24">
+        
+        <!-- Premium Header -->
+        <header class="text-center space-y-6 relative">
+            <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-cyan-500/10 blur-[120px] rounded-full -z-10"></div>
+            <div class="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.4em] text-cyan-500 mb-4">
+                Unified Socket Standard v1.0
             </div>
+            <h1 class="text-6xl md:text-8xl font-black tracking-tight text-white text-glow">
+                SOKET<span class="text-cyan-400">.IO</span>
+            </h1>
+            <p class="text-gray-500 text-lg md:text-2xl font-medium max-w-2xl mx-auto leading-relaxed">
+                Supreme infrastructure for high-resilience command and control operations.
+            </p>
         </header>
 
-        <!-- Main Deployment Card -->
-        <section class="border-glow rounded-2xl overflow-hidden">
-            <div class="bg-gradient-to-r from-cyan-900/20 to-transparent p-1">
-                <div class="bg-[#0f0f0f] rounded-xl p-8 space-y-8">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div class="space-y-1">
-                            <h2 class="text-2xl font-bold text-white">Rapid Deployment</h2>
-                            <p class="text-gray-500">Deploy the unified agent in memory via one-liner.</p>
+        <!-- Deployment Console -->
+        <section class="relative group">
+            <div class="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
+            <div class="relative bg-[#080808] border border-white/5 rounded-3xl p-8 md:p-12 space-y-10 border-glow">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                    <div class="space-y-3">
+                        <h2 class="text-3xl font-black text-white tracking-tight">Rapid Deployment</h2>
+                        <p class="text-gray-500 font-medium">Execute the unified installer directly into system memory.</p>
+                    </div>
+                    <button onclick="copyCommand()" class="copy-btn btn-primary bg-cyan-500 hover:bg-cyan-400 text-black px-10 py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                        Copy Installer
+                    </button>
+                </div>
+                
+                <div class="relative group/cmd">
+                    <div class="absolute -inset-0.5 bg-cyan-500/20 rounded-2xl blur-sm opacity-0 group-hover/cmd:opacity-100 transition duration-500"></div>
+                    <div class="relative bg-black rounded-2xl p-6 md:p-8 border border-white/5 overflow-hidden">
+                        <div class="flex items-center gap-2 mb-4 opacity-30">
+                            <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
                         </div>
-                        <button onclick="copyCommand()" class="btn-primary w-full md:w-auto">COPY INSTALLER</button>
-                    </div>
-                    <div class="bg-black/80 p-5 rounded-lg border border-white/5 relative overflow-hidden group">
-                        <code id="install-cmd" class="mono text-cyan-400 text-sm md:text-base block whitespace-pre-wrap break-all">bash -c "$(curl -fsSL https://raw.githubusercontent.com/Oyen-Sec/soket/main/deploy/install.sh)"</code>
+                        <code id="install-cmd" class="mono text-cyan-400 text-sm md:text-lg block whitespace-pre-wrap leading-relaxed">bash -c "$(curl -fsSL https://raw.githubusercontent.com/Oyen-Sec/soket/main/deploy/install.sh)"</code>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Tech Stack Grid -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="card p-8 space-y-4">
-                <div class="w-10 h-10 bg-cyan-500/10 rounded-lg flex items-center justify-center border border-cyan-500/20">
-                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+        <!-- Feature Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-[#0c0c0c] p-10 rounded-3xl border border-white/5 hover-lift space-y-6">
+                <div class="w-14 h-14 accent-gradient rounded-2xl flex items-center justify-center shadow-lg">
+                    <svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 </div>
-                <h3 class="text-lg font-bold text-white uppercase tracking-tight">Core Language</h3>
-                <p class="text-gray-500 text-sm">Engineered in C99 (Agent) and Go 1.22 (Relay) for maximum efficiency and throughput.</p>
-            </div>
-            <div class="card p-8 space-y-4">
-                <div class="w-10 h-10 bg-cyan-500/10 rounded-lg flex items-center justify-center border border-cyan-500/20">
-                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                <div class="space-y-2">
+                    <h3 class="text-xl font-black text-white uppercase tracking-tight">Core Engine</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed font-medium">C99 agent paired with a high-concurrency Go 1.22 relay for elite performance.</p>
                 </div>
-                <h3 class="text-lg font-bold text-white uppercase tracking-tight">Cryptography</h3>
-                <p class="text-gray-500 text-sm">Hardened with TLS 1.3 (BearSSL), Monocypher, XChaCha20, and Ed25519 identity.</p>
             </div>
-            <div class="card p-8 space-y-4">
-                <div class="w-10 h-10 bg-cyan-500/10 rounded-lg flex items-center justify-center border border-cyan-500/20">
-                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            
+            <div class="bg-[#0c0c0c] p-10 rounded-3xl border border-white/5 hover-lift space-y-6">
+                <div class="w-14 h-14 accent-gradient rounded-2xl flex items-center justify-center shadow-lg">
+                    <svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                 </div>
-                <h3 class="text-lg font-bold text-white uppercase tracking-tight">Evasion</h3>
-                <p class="text-gray-400 text-sm">Fileless execution via memfd, process masquerading, and anti-analysis kernel checks.</p>
+                <div class="space-y-2">
+                    <h3 class="text-xl font-black text-white uppercase tracking-tight">Crypto Stack</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed font-medium">TLS 1.3 (BearSSL), Monocypher, and Ed25519 identity verification modules.</p>
+                </div>
             </div>
-        </section>
 
-        <!-- Technical Details -->
-        <section class="space-y-8 py-12">
-            <h2 class="text-3xl font-extrabold text-white text-center">Infrastructure Core</h2>
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="space-y-3">
-                    <h4 class="text-[#00e5ff] font-bold uppercase tracking-widest text-xs">Runtime Technology</h4>
-                    <p class="text-gray-300 font-semibold text-lg">Fileless Memfd Loader</p>
-                    <p class="text-gray-500 text-sm leading-relaxed">The agent never touches the disk. It utilizes the memfd_create syscall to load and execute the binary directly from system memory, providing a zero-trace forensic footprint.</p>
+            <div class="bg-[#0c0c0c] p-10 rounded-3xl border border-white/5 hover-lift space-y-6">
+                <div class="w-14 h-14 accent-gradient rounded-2xl flex items-center justify-center shadow-lg">
+                    <svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                 </div>
-                <div class="space-y-3">
-                    <h4 class="text-[#00e5ff] font-bold uppercase tracking-widest text-xs">Network Security</h4>
-                    <p class="text-gray-300 font-semibold text-lg">L7 TLS Mimicry</p>
-                    <p class="text-gray-500 text-sm leading-relaxed">All communication is wrapped in an encrypted tunnel that mimics standard HTTPS browser fingerprints (Chrome/Firefox), evading deep packet inspection (DPI) and traffic analysis.</p>
+                <div class="space-y-2">
+                    <h3 class="text-xl font-black text-white uppercase tracking-tight">Elite Evasion</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed font-medium">Fileless memfd loading, L7 mimicry, and randomized jitter heartbeat logic.</p>
                 </div>
             </div>
         </section>
 
-        <!-- Quick Start Guide -->
-        <section class="card p-8 md:p-12 space-y-12">
-            <h2 class="text-3xl font-extrabold text-white">Operational Setup</h2>
+        <!-- Technical Specs -->
+        <section class="space-y-12">
+            <div class="text-center space-y-4">
+                <h2 class="text-4xl font-black text-white tracking-tight">Infrastructure Core</h2>
+                <div class="h-1 w-20 bg-cyan-500 mx-auto rounded-full"></div>
+            </div>
+            
             <div class="grid md:grid-cols-2 gap-12">
-                <div class="space-y-6">
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-full bg-cyan-500 text-black flex items-center justify-center font-bold text-sm">1</span>
-                        <h3 class="text-white font-bold">Configure Relay</h3>
+                <div class="bg-[#080808] p-8 rounded-3xl border border-white/5 space-y-4">
+                    <div class="text-cyan-500 font-black text-[10px] uppercase tracking-[0.3em]">Runtime</div>
+                    <h4 class="text-2xl font-bold text-white tracking-tight">Fileless Memfd Loader</h4>
+                    <p class="text-gray-500 text-base leading-relaxed">
+                        The agent utilizes the <span class="text-gray-300 mono bg-white/5 px-1.5 py-0.5 rounded">memfd_create</span> syscall to execute directly from system memory, leaving zero forensic trace on the physical disk.
+                    </p>
+                </div>
+                <div class="bg-[#080808] p-8 rounded-3xl border border-white/5 space-y-4">
+                    <div class="text-cyan-500 font-black text-[10px] uppercase tracking-[0.3em]">Networking</div>
+                    <h4 class="text-2xl font-bold text-white tracking-tight">L7 TLS Mimicry</h4>
+                    <p class="text-gray-500 text-base leading-relaxed">
+                        All traffic is wrapped in an encrypted tunnel that mimics <span class="text-gray-300">Chrome/Firefox HTTPS</span> fingerprints, evading advanced deep packet inspection (DPI).
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Operational Steps -->
+        <section class="bg-[#0c0c0c] rounded-[40px] p-10 md:p-16 border border-white/5 space-y-16">
+            <h2 class="text-4xl font-black text-white text-center">Operational Setup</h2>
+            <div class="grid md:grid-cols-2 gap-16">
+                <div class="space-y-8">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-cyan-400 font-black text-xl">01</div>
+                        <h3 class="text-2xl font-black text-white tracking-tight uppercase">Config Relay</h3>
                     </div>
                     <div class="space-y-4">
-                        <p class="text-gray-500 text-sm">Start the multiplexer on your control server:</p>
-                        <pre class="bg-black p-4 rounded-lg text-xs mono text-cyan-300 border border-white/5">./gs-oyen-r -listen 0.0.0.0:443</pre>
+                        <p class="text-gray-500 font-medium">Initialize the multiplexer on your VPS:</p>
+                        <div class="bg-black p-6 rounded-2xl border border-white/5 mono text-cyan-400 text-sm">
+                            ./gs-oyen-r -listen 0.0.0.0:443
+                        </div>
                     </div>
                 </div>
-                <div class="space-y-6">
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-full bg-cyan-500 text-black flex items-center justify-center font-bold text-sm">2</span>
-                        <h3 class="text-white font-bold">Deploy Agent</h3>
+                
+                <div class="space-y-8">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-cyan-400 font-black text-xl">02</div>
+                        <h3 class="text-2xl font-black text-white tracking-tight uppercase">Deploy Agent</h3>
                     </div>
                     <div class="space-y-4">
-                        <p class="text-gray-500 text-sm">Connect the target using the control secret:</p>
-                        <pre class="bg-black p-4 rounded-lg text-xs mono text-cyan-300 border border-white/5">./gs-oyen-s -s "SECRET" -i "IP" -m 443</pre>
+                        <p class="text-gray-500 font-medium">Link the target using your control secret:</p>
+                        <div class="bg-black p-6 rounded-2xl border border-white/5 mono text-cyan-400 text-sm">
+                            ./gs-oyen-s -s "KEY" -i "IP" -m 443
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Footer -->
-        <footer class="text-center py-12 border-t border-white/5">
-            <p class="text-gray-600 text-xs font-bold uppercase tracking-[0.3em]">Soket.io Standard v1.0</p>
-            <p class="text-gray-700 text-sm mt-2">&copy; 2026 Oyen-Sec Infrastructure. Built for absolute resilience.</p>
+        <footer class="text-center py-20 space-y-4">
+            <div class="flex justify-center gap-8 opacity-20 grayscale mb-8">
+                <span class="font-black text-sm uppercase tracking-widest">C99</span>
+                <span class="font-black text-sm uppercase tracking-widest">GO 1.22</span>
+                <span class="font-black text-sm uppercase tracking-widest">BEARSSL</span>
+            </div>
+            <p class="text-gray-700 text-[10px] font-black uppercase tracking-[0.5em]">Soket.io v1.0 Standard</p>
+            <p class="text-gray-800 text-xs">&copy; 2026 Oyen-Sec Infrastructure. Engineered for absolute resilience.</p>
         </footer>
     </div>
 
@@ -134,12 +188,17 @@
             navigator.clipboard.writeText(cmd);
             const btn = event.target;
             const originalText = btn.innerText;
-            btn.innerText = 'COPIED!';
-            btn.classList.replace('btn-primary', 'bg-green-500');
+            
+            // Premium Feedback State
+            btn.innerText = 'Copied to Clipboard';
+            btn.classList.replace('bg-cyan-500', 'bg-green-500');
+            btn.classList.add('shadow-[0_0_30px_rgba(34,197,94,0.4)]');
+            
             setTimeout(() => {
                 btn.innerText = originalText;
-                btn.classList.replace('bg-green-500', 'btn-primary');
-            }, 2000);
+                btn.classList.replace('bg-green-500', 'bg-cyan-500');
+                btn.classList.remove('shadow-[0_0_30px_rgba(34,197,94,0.4)]');
+            }, 2500);
         }
     </script>
 </body>
