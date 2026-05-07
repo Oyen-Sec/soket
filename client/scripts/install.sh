@@ -99,7 +99,7 @@ Key: ${CAMPAIGN_KEY}"
     log_ok
 fi
 
-# Final Output
+#  Output
 echo ""
 echo "=Campaign Key   : ${CAMPAIGN_KEY}"
 echo "=Deployment     : SUCCESSFUL"

@@ -1038,11 +1038,11 @@ int ph_stealth_get_jitter_delay(int base_delay_ms)
 
     int jitter_offset = (random_value % (jitter_range * 2 + 1)) - jitter_range;
 
-    int final_delay = base_delay_ms + jitter_offset;
+    int _delay = base_delay_ms + jitter_offset;
 
-    if (final_delay < 100) {
-        final_delay = 100;
+    if (_delay < 100) {
+        _delay = 100;
     }
 
-    return final_delay;
+    return _delay;
 }

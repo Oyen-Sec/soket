@@ -1,6 +1,6 @@
 // Project: Soket.io V7.0
 // Module: C2 Component
-// Description: Professional C2 Infrastructure component.
+// Description:  C2 Infrastructure component.
 
 
 package protocol

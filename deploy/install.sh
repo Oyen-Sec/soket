@@ -1,5 +1,5 @@
 #!/bin/bash
-# Phantom-Socket v1.0 Final - Standardized Infrastructure
+# Phantom-Socket v1.0 - Standardized Infrastructure
 # Features: Anti-VM, Jitter Heartbeat, PSK Pre-Auth, and PTY Shell.
 
 set -euo pipefail
