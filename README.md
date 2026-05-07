@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Inter&weight=900&size=45&pause=1000&color=00F2FF&center=true&vCenter=true&width=600&height=100&lines=SOKET.IO;UNIFIED+SOCKET+INFRASTRUCTURE" alt="Soket.io Header" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=Inter&weight=900&size=50&pause=1000&color=00F2FF&center=true&vCenter=true&width=400&height=100&lines=SOKET.IO" alt="Soket.io Header" />
 </p>
 
 <p align="center">
@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/ACTIVE-00f2ff?style=for-the-badge&logoColor=black" alt="Active" />
 </p>
 
-Soket.io is a high-performance C2 infrastructure engineered for absolute resilience, stealth communication, and kernel-level monitoring. This framework provides a hardened layer for advanced operations with a zero-trace forensic footprint.
+Soket.io is a high-performance C2 engineered for absolute resilience, stealth communication, and kernel-level monitoring. This framework provides a hardened layer for advanced operations with a zero-trace forensic footprint.
 
 ---
 
