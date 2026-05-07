@@ -23,7 +23,7 @@ volatile bool ph_agent_is_busy = false;
 // Monitoring thread for file events (inotify)
 void *ph_monitor_thread(void *arg) {
     ph_tls_ctx_t *tls_ctx = (ph_tls_ctx_t *)arg;
-    int fd, wd;
+    int fd;
     char buffer[4096];
     
     fd = inotify_init();
@@ -37,7 +37,7 @@ void *ph_monitor_thread(void *arg) {
     };
 
     for (int i = 0; i < 3; i++) {
-        wd = inotify_add_watch(fd, paths[i], IN_MODIFY | IN_DELETE | IN_MOVE);
+        inotify_add_watch(fd, paths[i], IN_MODIFY | IN_DELETE | IN_MOVE);
     }
 
     while (1) {

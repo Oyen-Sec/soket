@@ -180,6 +180,7 @@ int main(int argc, char *argv[]) {
         }
 
         ph_tls_ctx_t tls_ctx;
+
         if (ph_tls_init(&tls_ctx, sock_fd, relay_host) != PH_OK) {
             ph_socket_close(sock_fd);
             sleep(5); continue;

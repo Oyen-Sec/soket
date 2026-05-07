@@ -38,10 +38,16 @@ int ph_tls_init(ph_tls_ctx_t *ctx, int socket_fd, const char *sni_domain)
     memset(ctx, 0, sizeof(ph_tls_ctx_t));
     ctx->socket_fd = socket_fd;
 
+    // Production: Initialize with NO certificate verification for self-signed relay compatibility
     br_ssl_client_init_full(&ctx->sc, &ctx->xc, NULL, 0);
+    
+    // Set engine buffer
     br_ssl_engine_set_buffer(&ctx->sc.eng, ctx->iobuf, sizeof(ctx->iobuf), 1);
+    
+    // Reset client for SNI
     br_ssl_client_reset(&ctx->sc, sni_domain ? sni_domain : PH_TLS_SNI_DOMAIN, 0);
 
+    // I/O initialization
     br_sslio_init(&ctx->ioc, &ctx->sc.eng, sock_read, &ctx->socket_fd, sock_write, &ctx->socket_fd);
 
     return PH_OK;
@@ -51,18 +57,15 @@ int ph_tls_handshake(ph_tls_ctx_t *ctx)
 {
     if (!ctx) return PH_ERR_NULL_PTR;
 
-    // Trigger handshake by reading 0 bytes
-    char buf;
-    br_sslio_read(&ctx->ioc, &buf, 0);
+    // Trigger handshake and wait for completion
+    br_sslio_flush(&ctx->ioc);
 
     uint32_t state;
     while ((state = br_ssl_engine_current_state(&ctx->sc.eng)) != BR_SSL_CLOSED) {
         if (!(state & BR_SSL_SENDREC) && !(state & BR_SSL_RECVREC)) {
-            // Handshake completed or failed
             break;
         }
-        // Force engine to move forward
-        br_sslio_flush(&ctx->ioc);
+        if (br_sslio_flush(&ctx->ioc) < 0) break;
     }
 
     if (state & BR_SSL_CLOSED) {
