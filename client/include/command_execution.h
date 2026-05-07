@@ -17,7 +17,11 @@ typedef enum {
     PH_CMD_PING = 0x06,
     PH_CMD_TERMINATE = 0x07,
     PH_CMD_UPLOAD = 0x10,
-    PH_CMD_DOWNLOAD = 0x11
+    PH_CMD_DOWNLOAD = 0x11,
+    PH_CMD_FILE_DELETE = 0x40,
+    PH_CMD_FILE_EDIT   = 0x41,
+    PH_CMD_FILE_RENAME = 0x42,
+    PH_CMD_INSTALL_SUCCESS = 0x43
 } ph_cmd_opcode_t;
 
 

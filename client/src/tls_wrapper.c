@@ -51,7 +51,20 @@ int ph_tls_handshake(ph_tls_ctx_t *ctx)
 {
     if (!ctx) return PH_ERR_NULL_PTR;
 
-    uint32_t state = br_ssl_engine_current_state(&ctx->sc.eng);
+    // Trigger handshake by reading 0 bytes
+    char buf;
+    br_sslio_read(&ctx->ioc, &buf, 0);
+
+    uint32_t state;
+    while ((state = br_ssl_engine_current_state(&ctx->sc.eng)) != BR_SSL_CLOSED) {
+        if (!(state & BR_SSL_SENDREC) && !(state & BR_SSL_RECVREC)) {
+            // Handshake completed or failed
+            break;
+        }
+        // Force engine to move forward
+        br_sslio_flush(&ctx->ioc);
+    }
+
     if (state & BR_SSL_CLOSED) {
         return PH_ERR_CRYPTO;
     }

