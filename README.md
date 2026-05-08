@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Inter&weight=900&size=50&pause=1000&color=00F2FF&center=true&vCenter=true&width=400&height=100&lines=SOKET.IO+v1.0+Final" alt="Soket.io Header" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=Inter&weight=900&size=50&pause=1000&color=00F2FF&center=true&vCenter=true&width=400&height=100&lines=PHANTOM-SOCKET+v1.0+Final" alt="Phantom-Socket Header" />
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/V1.0_FINAL-222222?style=for-the-badge" alt="V1.0 Final" />
-  <img src="https://img.shields.io/badge/ACTIVE-00f2ff?style=for-the-badge&logoColor=black" alt="Active" />
+  <img src="https://img.shields.io/badge/PRODUCTION-00f2ff?style=for-the-badge&logoColor=black" alt="Production" />
 </p>
 
-Soket.io v1.0 Final is a high-performance C2 engineered for absolute resilience, stealth communication, and kernel-level monitoring. This framework provides a hardened layer for advanced operations with a zero-trace forensic footprint.
+Phantom-Socket v1.0 Final is a high-performance C2 engineered for absolute resilience, stealth communication, and kernel-level monitoring. This framework provides a hardened layer for advanced operations with a zero-trace forensic footprint.
 
 ---
 
@@ -83,4 +83,4 @@ Standardized aliases for rapid deployment:
 
 ---
 
-&copy; 2026 Oyen-Sec Infrastructure. Built for absolute resilience.
+&copy; 2026 Phantom-Socket Infrastructure. Built for absolute resilience.

