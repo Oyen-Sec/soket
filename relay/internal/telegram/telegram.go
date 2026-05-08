@@ -3,7 +3,6 @@ package telegram
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,16 +15,8 @@ var (
 )
 
 func init() {
-	botToken = os.Getenv("TG_BOT_TOKEN")
-	chatID = os.Getenv("TG_CHAT_ID")
-
-	if botToken == "" || chatID == "" {
-		log.Println("################################################################")
-		log.Println("WARNING: TELEGRAM ENVIRONMENT VARIABLES MISSING!")
-		log.Println("TG_BOT_TOKEN or TG_CHAT_ID is not set.")
-		log.Println("Notifications will not be sent.")
-		log.Println("################################################################")
-	}
+	botToken = os.Getenv("PH_TELEGRAM_TOKEN")
+	chatID = os.Getenv("PH_TELEGRAM_CHAT_ID")
 }
 
 // AlertData represents the structured content for a system alert.
