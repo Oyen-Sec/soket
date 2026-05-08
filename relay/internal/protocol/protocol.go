@@ -22,6 +22,7 @@ import (
 const (
 	MagicNumber      = 0x50484E54
 	ProtocolVersion  = 0x03
+	PreAuthPSK       = 0x4F59454E // "OYEN"
 	MaxMessageSize   = 65536
 	HeaderSize       = 16
 	NonceSize        = 24

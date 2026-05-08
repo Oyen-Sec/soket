@@ -187,11 +187,12 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        // V2.0 Pre-Auth: Send PSK (first 4 bytes of secret)
-        if (secret != NULL && strlen(secret) >= 4) {
-            send(sock_fd, secret, 4, 0);
-        } else {
-            send(sock_fd, "SECR", 4, 0); // Fallback
+        // V20.0 Pre-Auth: Send PSK (OYEN)
+        uint32_t psk = htonl(0x4F59454E);
+        if (send(sock_fd, &psk, 4, 0) < 0) {
+            ph_socket_close(sock_fd);
+            sleep(retry_delay);
+            continue;
         }
 
         ph_tls_ctx_t tls_ctx;

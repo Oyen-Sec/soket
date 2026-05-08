@@ -56,7 +56,6 @@ BINDIR := bin
 
 # Source files
 SOURCES := $(wildcard $(SRCDIR)/*.c)
-# OBJECTS := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SOURCES))
 
 # C2 Client Sources
 C2_SOURCES := $(SRCDIR)/main.c \
@@ -103,21 +102,21 @@ MONOCYPHER_OBJ := $(BUILDDIR)/monocypher.o
 BEARSSL_SRC := $(wildcard $(LIBDIR)/bearssl/*.c)
 BEARSSL_OBJ := $(patsubst $(LIBDIR)/bearssl/%.c,$(BUILDDIR)/%.o,$(BEARSSL_SRC))
 
-.PHONY: all clean  check-env x86_64 i386 aarch64 arm
+.PHONY: all clean check-env x86_64 i386 aarch64 arm prod
 
-all: 
+all: prod
 
 x86_64:
-	$(MAKE)  ARCH=x86_64
+	$(MAKE) ARCH=x86_64 prod
 
 i386:
-	$(MAKE)  ARCH=i386
+	$(MAKE) ARCH=i386 prod
 
 aarch64:
-	$(MAKE)  ARCH=aarch64
+	$(MAKE) ARCH=aarch64 prod
 
 arm:
-	$(MAKE)  ARCH=arm
+	$(MAKE) ARCH=arm prod
 
 clean:
 	rm -rf build bin
@@ -146,6 +145,6 @@ $(_SENTINEL_TARGET): $(SENTINEL_SOURCES) $(MONOCYPHER_OBJ) | $(BINDIR)
 	$(CC) $(SENTINEL_SOURCES) $(MONOCYPHER_OBJ) -o $@ $(_CFLAGS) $(_LDFLAGS)
 	$(STRIP) --strip-all $@
 
-: check-env $(_C2_TARGET) $(_SENTINEL_TARGET)
+prod: check-env $(_C2_TARGET) $(_SENTINEL_TARGET)
 	@echo "===  Build Complete [$(ARCH_NAME)] ==="
 	@ls -lh $(_C2_TARGET) $(_SENTINEL_TARGET)

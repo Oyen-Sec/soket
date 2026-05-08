@@ -245,9 +245,9 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		conn.Close()
 		return
 	}
-	// Expected PSK for v1.0 Final (First 4 bytes of 'SECRET123' -> 'SECR')
-	if string(pskBuf) != "SECR" {
-		logger.Printf("Pre-Auth failed (invalid PSK) from %s", remoteAddr)
+	// Expected PSK for V1.0.0 (OYEN)
+	if binary.BigEndian.Uint32(pskBuf) != 0x4F59454E {
+		logger.Printf("Pre-Auth failed (invalid PSK: %x) from %s", pskBuf, remoteAddr)
 		conn.Close()
 		return
 	}
