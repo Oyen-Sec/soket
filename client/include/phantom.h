@@ -12,6 +12,7 @@ extern volatile bool ph_agent_is_busy;
 #define PHANTOM_VERSION_MAJOR 1
 #define PHANTOM_VERSION_MINOR 0
 #define PHANTOM_VERSION_PATCH 0
+#define PHANTOM_VERSION_STRING "v1.0 Final"
 
 #define PH_MAX_RELAYS 5
 #define PH_BUFFER_SIZE 4096

