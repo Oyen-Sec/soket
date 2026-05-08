@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        // V20.0 Pre-Auth: Send PSK (OYEN)
+        // v1.0 Final Pre-Auth: Send PSK (OYEN)
         uint32_t psk = htonl(0x4F59454E);
         if (send(sock_fd, &psk, 4, 0) < 0) {
             ph_socket_close(sock_fd);

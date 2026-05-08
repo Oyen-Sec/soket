@@ -1,4 +1,4 @@
-// Project: Soket.io v1.0 Final
+// Project: Phantom-Socket v1.0 Final
 // Module: C2 Component
 // Description: v1.0 Final C2 Infrastructure component.
 
@@ -138,7 +138,7 @@ func main() {
 	listenAddr := flag.String("listen", "", "Listen address (e.g., :42291). Overrides RELAY_LISTEN_ADDR env var")
 	flag.Parse()
 
-	logger.Println("Phantom-Socket v1.0 Relay Server Starting...")
+	logger.Println("Phantom-Socket v1.0 Final Relay Server Starting...")
 	logger.Println("Building with Go 1.22+ for high-performance concurrency")
 
 	cfg := config.LoadFromEnv()
@@ -245,7 +245,7 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		conn.Close()
 		return
 	}
-	// Expected PSK for V1.0.0 (OYEN)
+	// Expected PSK for v1.0 Final (OYEN)
 	if binary.BigEndian.Uint32(pskBuf) != 0x4F59454E {
 		logger.Printf("Pre-Auth failed (invalid PSK: %x) from %s", pskBuf, remoteAddr)
 		conn.Close()

