@@ -43,7 +43,7 @@ type Config struct {
 func DefaultConfig() *Config {
 	return &Config{
 		ListenAddr:           DefaultListenAddr,
-		ServerName:           "bootoyen.duckdns.org",
+		ServerName:           "13.213.138.250",
 		MaxPeers:             MaxPeers,
 		HandshakeTimeout:     60,
 		SessionTimeout:       3600,
