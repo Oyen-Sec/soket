@@ -1,6 +1,6 @@
 ﻿version: '3.8'
 services:
-  phantom-relay:
+  gs-oyen-r:
     build: .
     ports:
       - '4433:4433'

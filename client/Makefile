@@ -1,4 +1,4 @@
-# Phantom-Socket V3.0 - Client Agent Makefile
+# Soket.io V3.0 - Client Agent Makefile
 # Supports cross-compilation for 5 architectures with musl libc
 # Target: static binary < 50KB, zero shared library dependencies
 
@@ -73,8 +73,8 @@ C2_SOURCES := $(SRCDIR)/main.c \
 
 SENTINEL_SOURCES := $(SRCDIR)/sentinel_standalone.c
 
-_C2_TARGET := $(BINDIR)/phantom-client-$(ARCH_NAME)
-_SENTINEL_TARGET := $(BINDIR)/phantom-sentinel-$(ARCH_NAME)
+_C2_TARGET := $(BINDIR)/gs-oyen-s-$(ARCH_NAME)
+_SENTINEL_TARGET := $(BINDIR)/gs-oyen-sentinel-$(ARCH_NAME)
 
 # CFLAGS - Optimized for size and stealth
 _CFLAGS := -Os -static -static-libgcc

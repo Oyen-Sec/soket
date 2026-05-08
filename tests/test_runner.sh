@@ -1,3 +1,3 @@
 ﻿#!/bin/bash
-echo '--- Phantom-Socket Test Suite ---'
+echo '--- Soket.io Test Suite ---'
 exit 0

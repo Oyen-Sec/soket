@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/phantom-socket/relay/internal/protocol"
+	"github.com/soket-io/gs-oyen-r/internal/protocol"
 )
 
 type PeerState int

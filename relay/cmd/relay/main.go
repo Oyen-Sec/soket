@@ -1,4 +1,4 @@
-// Project: Phantom-Socket v1.0 Final
+// Project: Soket.io v1.0 Final
 // Module: C2 Component
 // Description: v1.0 Final C2 Infrastructure component.
 
@@ -22,11 +22,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/phantom-socket/relay/internal/config"
-	"github.com/phantom-socket/relay/internal/peer"
-	"github.com/phantom-socket/relay/internal/tls_mimic"
-	"github.com/phantom-socket/relay/internal/crypto"
-	"github.com/phantom-socket/relay/internal/telegram"
+	"github.com/soket-io/gs-oyen-r/internal/config"
+	"github.com/soket-io/gs-oyen-r/internal/crypto"
+	"github.com/soket-io/gs-oyen-r/internal/peer"
+	"github.com/soket-io/gs-oyen-r/internal/telegram"
+	"github.com/soket-io/gs-oyen-r/internal/tls_mimic"
 )
 
 var (
@@ -54,8 +54,8 @@ func (w *crlfWriter) Write(p []byte) (n int, err error) {
 }
 
 func init() {
-	crlfOut := &crlfWriter{writer: os.Stdout}
-	logger = log.New(crlfOut, "[RELAY] ", log.LstdFlags|log.Lmicroseconds)
+	crlfOut := &crlfWriter{writer: os.Stderr}
+	logger = log.New(crlfOut, "[C2] ", log.LstdFlags|log.Lmicroseconds)
 }
 
 const (
@@ -138,7 +138,7 @@ func main() {
 	listenAddr := flag.String("listen", "", "Listen address (e.g., :42291). Overrides RELAY_LISTEN_ADDR env var")
 	flag.Parse()
 
-	logger.Println("Phantom-Socket v1.0 Final Relay Server Starting...")
+	logger.Println("Soket.io v1.0 Final Relay Server Starting...")
 	logger.Println("Building with Go 1.22+ for high-performance concurrency")
 
 	cfg := config.LoadFromEnv()
@@ -349,7 +349,7 @@ func printPeerList(registry *peer.Registry) {
 
 func startInteractiveConsole(registry *peer.Registry, cfg *config.Config) {
 	consoleMode = true
-	fmt.Println("Phantom-Socket v1.0 Relay Multiplexer Console")
+	fmt.Println("Soket.io v1.0 Relay Multiplexer Console")
 	fmt.Println("Type 'help' for available commands.")
 	fmt.Println()
 

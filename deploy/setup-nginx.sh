@@ -148,7 +148,7 @@ configure_nginx() {
 
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     PROJECT_ROOT="$(dirname "${SCRIPT_DIR}")"
-    NGINX_CONF="${PROJECT_ROOT}/configs/nginx/phantom-relay.conf"
+    NGINX_CONF="${PROJECT_ROOT}/configs/nginx/gs-oyen-r.conf"
 
     if [[ ! -f "${NGINX_CONF}" ]]; then
         log_error "NGINX config not found: ${NGINX_CONF}"
@@ -156,14 +156,14 @@ configure_nginx() {
     fi
 
     if [[ -d /etc/nginx/sites-available ]]; then
-        cp "${NGINX_CONF}" /etc/nginx/sites-available/phantom-relay.conf
-        sed -i "s/your-domain.com/${DOMAIN}/g" /etc/nginx/sites-available/phantom-relay.conf
-        ln -sf /etc/nginx/sites-available/phantom-relay.conf /etc/nginx/sites-enabled/
+        cp "${NGINX_CONF}" /etc/nginx/sites-available/gs-oyen-r.conf
+        sed -i "s/your-domain.com/${DOMAIN}/g" /etc/nginx/sites-available/gs-oyen-r.conf
+        ln -sf /etc/nginx/sites-available/gs-oyen-r.conf /etc/nginx/sites-enabled/
 
         rm -f /etc/nginx/sites-enabled/default
     elif [[ -d /etc/nginx/conf.d ]]; then
-        cp "${NGINX_CONF}" /etc/nginx/conf.d/phantom-relay.conf
-        sed -i "s/your-domain.com/${DOMAIN}/g" /etc/nginx/conf.d/phantom-relay.conf
+        cp "${NGINX_CONF}" /etc/nginx/conf.d/gs-oyen-r.conf
+        sed -i "s/your-domain.com/${DOMAIN}/g" /etc/nginx/conf.d/gs-oyen-r.conf
     else
         log_error "NGINX configuration directory not found"
         exit 1
@@ -291,12 +291,12 @@ display_summary() {
     log_info "4. Set PH_RELAY_TLS=true"
     echo ""
     log_info "Renew certificate: certbot renew --dry-run"
-    log_info "View logs: tail -f /var/log/nginx/phantom-relay-*.log"
+    log_info "View logs: tail -f /var/log/nginx/gs-oyen-r-*.log"
     echo ""
 }
 
 main() {
-    log_info "Phantom-Socket V3.0 - Module 15 NGINX Setup"
+    log_info "Soket.io V3.0 - Module 15 NGINX Setup"
     log_info "Domain: ${DOMAIN}"
     log_info "Email: ${EMAIL}"
     echo ""

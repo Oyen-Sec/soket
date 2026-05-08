@@ -1,11 +1,11 @@
 #!/bin/sh
-# Phantom-Socket V3.0 - Configure Script
+# Soket.io V3.0 - Configure Script
 # Detects build environment, compiler availability, and architecture
 # Outputs configuration for Makefile
 
 set -e
 
-echo "Phantom-Socket V3.0 Configuration"
+echo "Soket.io V3.0 Configuration"
 echo "================================="
 echo ""
 

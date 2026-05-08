@@ -1,17 +1,17 @@
 ﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: phantom-relay
+  name: gs-oyen-r
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: phantom-relay
+      app: gs-oyen-r
   template:
     metadata:
       labels:
-        app: phantom-relay
+        app: gs-oyen-r
     spec:
       containers:
-      - name: phantom-relay
-        image: phantom-relay:latest
+      - name: gs-oyen-r
+        image: gs-oyen-r:latest

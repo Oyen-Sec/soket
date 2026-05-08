@@ -36,7 +36,7 @@ func GenerateSelfSignedCert(hostname string, seed []byte) (tls.Certificate, erro
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			CommonName:   hostname,
-			Organization: []string{"Phantom-Socket Infrastructure"},
+			Organization: []string{"Soket.io Infrastructure"},
 		},
 		NotBefore:             notBefore,
 		NotAfter:              notAfter,

@@ -50,7 +50,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Oyen-Sec/soket/main/depl
 **Manual Infrastructure Build**
 ```bash
 # Production Relay Build
-cd relay && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/phantom-relay cmd/relay/main.go
+cd relay && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/gs-oyen-r cmd/relay/main.go
 
 # Production Agent Build
 cd client && make clean && make prod

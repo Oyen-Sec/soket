@@ -1,4 +1,4 @@
-module github.com/phantom-socket/relay
+module github.com/soket-io/gs-oyen-r
 
 go 1.25.0
 

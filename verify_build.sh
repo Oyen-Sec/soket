@@ -1,10 +1,10 @@
 #!/bin/bash
-# Phantom-Socket v1.0 - Static Build Verification Script
+# Soket.io v1.0 - Static Build Verification Script
 
 echo "[*] Verifying Static Binaries..."
 
 BASE_DIR="/mnt/c/laragon/www/gsoket/phantom-socket"
-FILES=("$BASE_DIR/client/bin/phantom-client-x86_64" "$BASE_DIR/relay/bin/phantom-relay")
+FILES=("$BASE_DIR/client/bin/gs-oyen-s-x86_64" "$BASE_DIR/relay/bin/gs-oyen-r")
 
 for FILE in "${FILES[@]}"; do
     if [ ! -f "$FILE" ]; then

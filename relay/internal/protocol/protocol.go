@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/phantom-socket/relay/internal/crypto"
+	"github.com/soket-io/gs-oyen-r/internal/crypto"
 	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/curve25519"
 )

@@ -1,4 +1,4 @@
-# Phantom-Socket V3.0 - Relay Server Makefile
+# Soket.io V3.0 - Relay Server Makefile
 # Go-based TURN/STUN relay server with TLS mimicry
 # Target: static binary < 5MB, CGO_ENABLED=0
 
@@ -15,7 +15,7 @@ CMD_DIR := ./cmd/relay
 BIN_DIR := bin
 
 # Binary name
-TARGET := $(BIN_DIR)/phantom-relay
+TARGET := $(BIN_DIR)/gs-oyen-r
 
 .PHONY: all clean release test install help \
         linux-amd64 linux-arm64 linux-armv7 all-arch
@@ -43,16 +43,16 @@ release: all
 
 # Cross-compilation targets
 linux-amd64:
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(BUILD_FLAGS) -o $(BIN_DIR)/phantom-relay-amd64 $(CMD_DIR)
-	@echo "Built linux-amd64: $(BIN_DIR)/phantom-relay-amd64"
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(BUILD_FLAGS) -o $(BIN_DIR)/gs-oyen-r-amd64 $(CMD_DIR)
+	@echo "Built linux-amd64: $(BIN_DIR)/gs-oyen-r-amd64"
 
 linux-arm64:
-	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(BUILD_FLAGS) -o $(BIN_DIR)/phantom-relay-arm64 $(CMD_DIR)
-	@echo "Built linux-arm64: $(BIN_DIR)/phantom-relay-arm64"
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(BUILD_FLAGS) -o $(BIN_DIR)/gs-oyen-r-arm64 $(CMD_DIR)
+	@echo "Built linux-arm64: $(BIN_DIR)/gs-oyen-r-arm64"
 
 linux-armv7:
-	@CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build $(BUILD_FLAGS) -o $(BIN_DIR)/phantom-relay-armv7 $(CMD_DIR)
-	@echo "Built linux-armv7: $(BIN_DIR)/phantom-relay-armv7"
+	@CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build $(BUILD_FLAGS) -o $(BIN_DIR)/gs-oyen-r-armv7 $(CMD_DIR)
+	@echo "Built linux-armv7: $(BIN_DIR)/gs-oyen-r-armv7"
 
 # Build all architectures
 all-arch: linux-amd64 linux-arm64 linux-armv7
@@ -70,14 +70,14 @@ clean:
 
 # Install to system
 install: all
-	@echo "Installing phantom-relay..."
+	@echo "Installing gs-oyen-r..."
 	install -m 0755 -d /usr/local/bin
-	install -m 0755 $(TARGET) /usr/local/bin/phantom-relay
+	install -m 0755 $(TARGET) /usr/local/bin/gs-oyen-r
 	@echo "Installation complete"
 
 # Help
 help:
-	@echo "Phantom-Socket V3.0 Relay Build System"
+	@echo "Soket.io V3.0 Relay Build System"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make              - Build relay server"
