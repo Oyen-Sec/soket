@@ -1,4 +1,4 @@
-// Package telegram - Advanced Telegram alerting for Phantom-Socket v1.0 Final infrastructure.
+// Package telegram - Advanced Telegram alerting for Soket.io V1.0 infrastructure.
 package telegram
 
 import (
@@ -16,13 +16,13 @@ var (
 )
 
 func init() {
-	botToken = os.Getenv("PH_TELEGRAM_TOKEN")
-	chatID = os.Getenv("PH_TELEGRAM_CHAT_ID")
+	botToken = os.Getenv("TG_BOT_TOKEN")
+	chatID = os.Getenv("TG_CHAT_ID")
 
 	if botToken == "" || chatID == "" {
 		log.Println("################################################################")
-		log.Println("WARNING: PRODUCTION TELEGRAM ENVIRONMENT VARIABLES MISSING!")
-		log.Println("PH_TELEGRAM_TOKEN or PH_TELEGRAM_CHAT_ID is not set.")
+		log.Println("WARNING: TELEGRAM ENVIRONMENT VARIABLES MISSING!")
+		log.Println("TG_BOT_TOKEN or TG_CHAT_ID is not set.")
 		log.Println("Notifications will not be sent.")
 		log.Println("################################################################")
 	}

@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "[ERROR] V1.0 - Secret key (-s) is mandatory for agent initialization\n");
         return 1;
     }
-    if (relay_host == NULL) relay_host = strdup("13.213.138.250");
+    if (relay_host == NULL) relay_host = strdup("bootoyen.duckdns.org");
     if (relay_port_str == NULL) relay_port_str = strdup("443");
 
     ph_heap_secret_t secret_ctx;

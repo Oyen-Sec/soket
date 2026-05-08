@@ -1,6 +1,6 @@
-// Project: Phantom-Socket v1.0 Final
+// Project: Soket.io V7.0
 // Module: C2 Component
-// Description: C2 Infrastructure component.
+// Description:  C2 Infrastructure component.
 
 
 package protocol
