@@ -1,6 +1,7 @@
 # Phantom Socket Gitignore
 bin/*
 !bin/gs-oyen-s-x86_64
+!bin/gs-oyen-r
 relay/bin/
 client/bin/
 client/build/
