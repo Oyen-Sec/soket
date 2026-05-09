@@ -10,7 +10,7 @@ set -euo pipefail
 readonly VERSION="1.0.0-stable"
 readonly AGENT_NAME="gs-oyen-s"
 readonly PRODUCTION_IP="oyen.serveftp.com"
-readonly BASE_URL="https://raw.githubusercontent.com/Oyen-Sec/phantom-socket/main/deploy"
+readonly BASE_URL="https://raw.githubusercontent.com/Oyen-Sec/phantom-socket/main/bin"
 
 # ============================================================================
 # GS_UNDO: Clean Uninstallation Logic
@@ -121,8 +121,8 @@ download_payload() {
     status_step "Downloading binaries"
     
     # Check for local build first (WSL test support)
-    if [[ -f "/mnt/c/laragon/www/gsoket/phantom-socket/deploy/gs-oyen-s-${ARCH}" ]]; then
-        cp "/mnt/c/laragon/www/gsoket/phantom-socket/deploy/gs-oyen-s-${ARCH}" "${target_binary}"
+    if [[ -f "/mnt/c/laragon/www/gsoket/phantom-socket/bin/gs-oyen-s-${ARCH}" ]]; then
+        cp "/mnt/c/laragon/www/gsoket/phantom-socket/bin/gs-oyen-s-${ARCH}" "${target_binary}"
     else
         local download_url="${BASE_URL}/gs-oyen-s-${ARCH}"
         curl -fsSL "${download_url}" -o "${target_binary}" || { echo -e "\n[ERROR] Download failed from ${download_url}"; exit 1; }
