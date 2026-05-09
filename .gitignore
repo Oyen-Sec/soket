@@ -1,0 +1,15 @@
+# Phantom Socket Gitignore
+bin/*
+!bin/gs-oyen-s-x86_64
+relay/bin/
+client/bin/
+client/build/
+*.log
+*.tmp
+test.sh
+check.sh
+test_install.sh
+verify_build.sh
+supreme_build.sh
+client.pid
+relay.pid

@@ -9,4 +9,4 @@ if [[ -z "${X}" ]]; then
 fi
 
 # Execute Installer
-curl -fsSL https://raw.githubusercontent.com/Oyen-Sec/phantom-socket/main/deploy/install.sh | bash -s -- "$@"
+curl -fsSL https://raw.githubusercontent.com/Oyen-Sec/soket/main/deploy/install.sh | bash -s -- "$@"

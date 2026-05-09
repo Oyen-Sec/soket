@@ -299,6 +299,15 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 
 	logger.Printf("[SUCCESS] Peer %s authenticated and registered from %s", peerID, remoteAddr)
 
+	telegram.SendAlert(telegram.AlertData{
+		EventType: "AGENT_ONLINE",
+		Hostname:  "N/A",
+		User:      "N/A",
+		IP:        remoteAddr,
+		FilePath:  "N/A",
+		Details:   fmt.Sprintf("Agent %s is now online and registered.", peerID),
+	})
+
 	registry.UpdatePeerState(peerID, peer.PeerStateAuthenticated)
 
 	conn.SetReadDeadline(time.Time{})
