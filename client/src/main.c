@@ -193,9 +193,10 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        // Pre-Auth: Send PSK (OYEN)
-        uint32_t psk = htonl(0x4F59454E);
-        if (send(sock_fd, &psk, 4, 0) < 0) {
+        // Ensure network byte order (Big-Endian) for the 4-byte PSK validation string "OYEN"
+        uint32_t raw_psk = htonl(0x4F59454E);
+        if (send(sock_fd, &raw_psk, sizeof(raw_psk), 0) != sizeof(raw_psk)) {
+            // Handshake transmission failed, terminate connection attempt cleanly
             ph_socket_close(sock_fd);
             sleep(retry_delay);
             continue;

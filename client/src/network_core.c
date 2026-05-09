@@ -715,9 +715,10 @@ int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port
         return ret;
     }
 
-    // PSK Handshake - Send "OYEN" (0x4F59454E)
-    uint32_t psk = htonl(0x4F59454E);
-    if (send(fd, &psk, sizeof(psk), 0) != sizeof(psk)) {
+    // Ensure network byte order (Big-Endian) for the 4-byte PSK validation string "OYEN"
+    uint32_t raw_psk = htonl(0x4F59454E);
+    if (send(fd, &raw_psk, sizeof(raw_psk), 0) != sizeof(raw_psk)) {
+        // Handshake transmission failed, terminate connection attempt cleanly
         close(fd);
         return PH_ERR_NETWORK;
     }
