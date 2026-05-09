@@ -296,7 +296,7 @@ display_summary() {
 }
 
 main() {
-    log_info "Soket.io V3.0 - Module 15 NGINX Setup"
+    log_info "Phantom Socket v1.0.0-stable - NGINX Deployment"
     log_info "Domain: ${DOMAIN}"
     log_info "Email: ${EMAIL}"
     echo ""

@@ -715,6 +715,13 @@ int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port
         return ret;
     }
 
+    // PSK Handshake - Send "OYEN" (0x4F59454E)
+    uint32_t psk = htonl(0x4F59454E);
+    if (send(fd, &psk, sizeof(psk), 0) != sizeof(psk)) {
+        close(fd);
+        return PH_ERR_NETWORK;
+    }
+
     ctx->connection.socket_fd = fd;
     ctx->connection.is_connected = 1;
     ctx->connection.last_activity = ph_get_timestamp_ms();

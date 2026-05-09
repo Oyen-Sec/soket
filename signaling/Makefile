@@ -1,8 +1,8 @@
-# Soket.io V3.0 - Signaling Server Makefile
+# Phantom Socket v1.0.0-stable - Signaling Server Makefile
 # Go-based WebSocket/DGA/Tor signaling server
 # Target: static binary < 5MB, CGO_ENABLED=0
 
-VERSION ?= 3.0.0
+VERSION ?= v1.0.0-stable
 GOOS ?= linux
 GOARCH ?= $(shell go env GOARCH 2>/dev/null || echo "amd64")
 
@@ -77,7 +77,7 @@ install: all
 
 # Help
 help:
-	@echo "Soket.io V3.0 Signaling Build System"
+	@echo "Phantom Socket v1.0.0-stable Signaling Build System"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make              - Build signaling server"

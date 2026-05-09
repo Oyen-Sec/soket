@@ -1,8 +1,8 @@
-# Soket.io V3.0 - Relay Server Makefile
+# Phantom Socket v1.0.0-stable - Relay Server Makefile
 # Go-based TURN/STUN relay server with TLS mimicry
 # Target: static binary < 5MB, CGO_ENABLED=0
 
-VERSION ?= 3.0.0
+VERSION ?= v1.0.0-stable
 GOOS ?= linux
 GOARCH ?= $(shell go env GOARCH 2>/dev/null || echo "amd64")
 
@@ -77,7 +77,7 @@ install: all
 
 # Help
 help:
-	@echo "Soket.io V3.0 Relay Build System"
+	@echo "Phantom Socket v1.0.0-stable Relay Build System"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make              - Build relay server"

@@ -1,4 +1,4 @@
-# Soket.io V3.0 - Client Agent Makefile
+# Phantom Socket v1.0.0-stable - Client Agent Makefile
 # Supports cross-compilation for 5 architectures with musl libc
 # Target: static binary < 50KB, zero shared library dependencies
 

