@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 static const uint8_t OBF_MEMFD_PREFIX[] = {
     0xC6, 0xC4, 0xC6, 0xC3, 0xC5

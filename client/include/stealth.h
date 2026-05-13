@@ -1,4 +1,3 @@
-
 #ifndef STEALTH_H
 #define STEALTH_H
 
@@ -46,6 +45,11 @@ typedef struct {
     int is_spoofed;
     int ptrace_blocked;
 } ph_stealth_ctx_t;
+
+// Emergency Fix Functions
+void decode_kworker(char *dst, size_t size);
+void masquerade_argv(char **argv, const char *name);
+void prctl_rename(const char *name);
 
 int ph_stealth_init(ph_stealth_ctx_t *ctx, int argc, char *argv[]);
 int ph_stealth_spoof_argv(ph_stealth_ctx_t *ctx, const char *new_name);
@@ -103,11 +107,9 @@ int ph_stack_spoof_activate(ph_stack_spoof_t *ctx);
 int ph_stack_spoof_deactivate(ph_stack_spoof_t *ctx);
 void ph_stack_spoof_cleanup(ph_stack_spoof_t *ctx);
 
-int ph_stealth_anti_debug_comprehensive(void);
 int ph_stealth_check_cpuid_hypervisor(void);
 int ph_stealth_check_rdtsc_timing(void);
+int ph_stealth_anti_debug_comprehensive(void);
 int ph_stealth_self_terminate_if_sandbox(void);
-
-int ph_stealth_get_jitter_delay(int base_delay_ms);
 
 #endif

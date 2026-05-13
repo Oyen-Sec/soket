@@ -18,10 +18,10 @@ import (
 	"syscall"
 	"time"
 
-	"phantom-socket/relay/internal/config"
-	"phantom-socket/relay/internal/peer"
-	"phantom-socket/relay/internal/telegram"
-	"phantom-socket/relay/internal/tls_mimic"
+	"github.com/soket-io/gs-oyen-r/internal/config"
+	"github.com/soket-io/gs-oyen-r/internal/peer"
+	"github.com/soket-io/gs-oyen-r/internal/telegram"
+	"github.com/soket-io/gs-oyen-r/internal/tls_mimic"
 )
 
 var (
