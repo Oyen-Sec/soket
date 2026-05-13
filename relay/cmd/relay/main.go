@@ -258,13 +258,10 @@ func acceptConnections(listener net.Listener, registry *peer.Registry, cfg *conf
 func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config) {
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Printf("Recovered from panic in handleConnection: %v", r)
+			// Silent recovery
 			conn.Close()
 		}
 	}()
-
-	remoteAddr := conn.RemoteAddr().String()
-	// No logs before PSK validation to drop scanners silently
 
 	// Pre-Auth Pre-Logging Guard: The multiplexer MUST read the incoming raw socket connection asynchronously.
 	// If the initial 4 bytes do NOT exactly match Big-Endian 0x4F59454E ("OYEN"),
@@ -282,6 +279,7 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		return
 	}
 
+	remoteAddr := conn.RemoteAddr().String()
 	// Upgrade to TLS after PSK validation
 	tlsConn := tls.Server(conn, relayTLSConfig)
 	tlsConn.SetDeadline(time.Now().Add(10 * time.Second))
