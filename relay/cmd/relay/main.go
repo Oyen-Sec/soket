@@ -260,22 +260,23 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		}
 	}()
 
-	remoteAddr := conn.RemoteAddr().String()
-	logger.Printf("New connection from %s", remoteAddr)
-
-	// PSK Pre-Auth
-	// Before TLS Handshake, expect 4-byte PSK
+	// Pre-Auth Pre-Logging Guard: The multiplexer MUST read the incoming raw socket connection asynchronously.
+	// If the initial 4 bytes do NOT exactly match Big-Endian 0x4F59454E ("OYEN"),
+	// the relay MUST immediately terminate the socket interface (conn.Close()) WITHOUT printing any notification.
 	pskBuf := make([]byte, 4)
 	conn.SetReadDeadline(time.Now().Add(3 * time.Second))
 	if _, err := io.ReadFull(conn, pskBuf); err != nil {
 		conn.Close()
 		return
 	}
-	// Expected PSK (OYEN)
+
+	// Validation Strictness: Big-Endian 0x4F59454E ("OYEN")
 	if binary.BigEndian.Uint32(pskBuf) != 0x4F59454E {
 		conn.Close()
 		return
 	}
+
+	remoteAddr := conn.RemoteAddr().String()
 	logger.Printf("[+] Agent authenticated successfully from %s", remoteAddr)
 
 	// Explicit TLS Handshake for early error detection
