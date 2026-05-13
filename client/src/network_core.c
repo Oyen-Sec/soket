@@ -1,4 +1,3 @@
-
 #include "phantom.h"
 #include "network_core.h"
 #include "utils.h"
@@ -161,6 +160,9 @@ int ph_socket_connect(int fd, const char *address, uint16_t port, uint32_t timeo
         return PH_ERR_INVALID_ARG;
     }
 
+    dprintf(STDERR_FILENO, "[-] Connecting to %s:%d...\n", address, port);
+    fsync(STDERR_FILENO);
+
     struct addrinfo hints, *result = NULL;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -171,6 +173,7 @@ int ph_socket_connect(int fd, const char *address, uint16_t port, uint32_t timeo
 
     int ret = getaddrinfo(address, port_str, &hints, &result);
     if (ret != 0) {
+        dprintf(STDERR_FILENO, "[NET_FAIL] DNS resolution failed for %s\n", address);
         return PH_ERR_DNS;
     }
 
@@ -181,10 +184,12 @@ int ph_socket_connect(int fd, const char *address, uint16_t port, uint32_t timeo
 
         freeaddrinfo(result);
         ph_socket_set_blocking(fd);
+        dprintf(STDERR_FILENO, "[+] TCP Connected.\n");
         return PH_OK;
     }
 
     if (errno != EINPROGRESS) {
+        dprintf(STDERR_FILENO, "[NET_FAIL] TCP connect failed: %s\n", strerror(errno));
         freeaddrinfo(result);
         return PH_ERR_NETWORK;
     }
@@ -224,6 +229,7 @@ int ph_socket_connect(int fd, const char *address, uint16_t port, uint32_t timeo
     freeaddrinfo(result);
 
     if (ready <= 0) {
+        dprintf(STDERR_FILENO, "[NET_FAIL] Connection timeout\n");
         return PH_ERR_TIMEOUT;
     }
 
@@ -232,10 +238,12 @@ int ph_socket_connect(int fd, const char *address, uint16_t port, uint32_t timeo
     getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len);
 
     if (error != 0) {
+        dprintf(STDERR_FILENO, "[NET_FAIL] TCP connect failed: %s\n", strerror(error));
         return PH_ERR_NETWORK;
     }
 
     ph_socket_set_blocking(fd);
+    dprintf(STDERR_FILENO, "[+] TCP Connected.\n");
     return PH_OK;
 }
 
@@ -313,11 +321,11 @@ int ph_reconnect_init(ph_reconnect_state_t *state)
         return PH_ERR_NULL_PTR;
     }
 
-    state->min_delay_ms = 1000;
-    state->max_delay_ms = 60000;
+    state->min_delay_ms = 3000;
+    state->max_delay_ms = 30000;
     state->current_delay_ms = state->min_delay_ms;
     state->retry_count = 0;
-    state->max_retries = 10;
+    state->max_retries = 0xFFFF; // Essentially forever
     state->last_attempt = 0;
     state->is_backing_off = 0;
 
@@ -330,25 +338,23 @@ int ph_reconnect_attempt(ph_reconnect_state_t *state)
         return PH_ERR_NULL_PTR;
     }
 
-    if (state->retry_count >= state->max_retries) {
-        return PH_ERR_TIMEOUT;
-    }
-
     uint32_t delay = ph_reconnect_get_delay(state);
 
-    uint32_t jitter = (ph_get_timestamp_ms() % (delay / 4));
-    delay += jitter;
+    // Exponential backoff: 3s, 6s, 12s, then every 30s
+    if (state->retry_count == 0) delay = 3000;
+    else if (state->retry_count == 1) delay = 6000;
+    else if (state->retry_count == 2) delay = 12000;
+    else delay = 30000;
+
+    dprintf(STDERR_FILENO, "[-] Connection retry #%d in %d ms...\n", state->retry_count + 1, delay);
+    fsync(STDERR_FILENO);
 
     ph_sleep_ms(delay);
 
     state->last_attempt = ph_get_timestamp_ms();
     state->retry_count++;
 
-    state->current_delay_ms *= 2;
-    if (state->current_delay_ms > state->max_delay_ms) {
-        state->current_delay_ms = state->max_delay_ms;
-    }
-
+    state->current_delay_ms = delay;
     state->is_backing_off = 1;
 
     return PH_OK;

