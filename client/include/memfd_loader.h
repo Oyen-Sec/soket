@@ -30,6 +30,7 @@ typedef struct {
     int memfd;
     char memfd_name[PH_MEMFD_NAME_LENGTH];
     ph_exec_mode_t exec_mode;
+    char disk_path[256];
     size_t elf_size;
     int is_loaded;
     int is_executed;

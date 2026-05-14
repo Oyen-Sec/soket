@@ -70,6 +70,7 @@ typedef struct {
 
 int ph_network_init(ph_network_ctx_t *ctx);
 void ph_network_cleanup(ph_network_ctx_t *ctx);
+int ph_network_connect_with_fallback(ph_network_ctx_t *ctx, const char *host);
 
 int ph_socket_create(int domain, int type, int protocol);
 int ph_socket_set_nonblocking(int fd);

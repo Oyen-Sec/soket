@@ -51,11 +51,13 @@ func (s PeerState) String() string {
 }
 
 type PeerInfo struct {
-	mu sync.RWMutex
+	Mu sync.RWMutex
 
 	PeerID       string
 	ProcessName  string
 	RemoteAddr   string
+	OS           string
+	Arch         string
 	ConnectedAt  time.Time
 	LastActivity time.Time
 
@@ -79,10 +81,12 @@ type PeerInfo struct {
 	LastHolePunch time.Time
 }
 
+
 type Registry struct {
-	mu    sync.RWMutex
+	Mu    sync.RWMutex
 	peers map[string]*PeerInfo
 }
+
 
 func NewRegistry() *Registry {
 	return &Registry{
@@ -91,8 +95,8 @@ func NewRegistry() *Registry {
 }
 
 func (r *Registry) AddPeer(peerID string, conn net.Conn) (*PeerInfo, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.Mu.Lock()
+	defer r.Mu.Unlock()
 
 	if _, exists := r.peers[peerID]; exists {
 		return nil, fmt.Errorf("peer %s already exists", peerID)
@@ -119,8 +123,8 @@ func (r *Registry) AddPeer(peerID string, conn net.Conn) (*PeerInfo, error) {
 }
 
 func (r *Registry) RemovePeer(peerID string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.Mu.Lock()
+	defer r.Mu.Unlock()
 
 	peer, exists := r.peers[peerID]
 	if !exists {
@@ -136,8 +140,8 @@ func (r *Registry) RemovePeer(peerID string) error {
 }
 
 func (r *Registry) GetPeer(peerID string) (*PeerInfo, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+	r.Mu.RLock()
+	defer r.Mu.RUnlock()
 
 	peer, exists := r.peers[peerID]
 	if !exists {
@@ -153,8 +157,8 @@ func (r *Registry) UpdatePeerState(peerID string, state PeerState) error {
 		return err
 	}
 
-	peer.mu.Lock()
-	defer peer.mu.Unlock()
+	peer.Mu.Lock()
+	defer peer.Mu.Unlock()
 
 	peer.State = state
 	peer.LastActivity = time.Now()
@@ -168,8 +172,8 @@ func (r *Registry) UpdateProcessName(peerID, processName string) error {
 		return err
 	}
 
-	peer.mu.Lock()
-	defer peer.mu.Unlock()
+	peer.Mu.Lock()
+	defer peer.Mu.Unlock()
 
 	peer.ProcessName = processName
 	return nil
@@ -181,8 +185,8 @@ func (r *Registry) AddP2PCandidate(peerID string, candidate protocol.P2PCandidat
 		return err
 	}
 
-	peer.mu.Lock()
-	defer peer.mu.Unlock()
+	peer.Mu.Lock()
+	defer peer.Mu.Unlock()
 
 	peer.P2PCandidates = append(peer.P2PCandidates, candidate)
 	peer.LastActivity = time.Now()
@@ -191,30 +195,40 @@ func (r *Registry) AddP2PCandidate(peerID string, candidate protocol.P2PCandidat
 }
 
 func (r *Registry) GetActivePeers() []*PeerInfo {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+	r.Mu.RLock()
+	defer r.Mu.RUnlock()
 
 	var active []*PeerInfo
-	for _, peer := range r.peers {
-		peer.mu.RLock()
-		if peer.State != PeerStateDisconnected && peer.State != PeerStateFailed {
-			active = append(active, peer)
+	for _, p := range r.peers {
+		p.Mu.RLock()
+		if p.State != PeerStateDisconnected && p.State != PeerStateFailed {
+			active = append(active, p)
 		}
-		peer.mu.RUnlock()
+		p.Mu.RUnlock()
 	}
-
 	return active
 }
 
+func (r *Registry) GetAllPeers() map[string]*PeerInfo {
+	r.Mu.RLock()
+	defer r.Mu.RUnlock()
+
+	peers := make(map[string]*PeerInfo)
+	for k, v := range r.peers {
+		peers[k] = v
+	}
+	return peers
+}
+
 func (r *Registry) GetPeerCount() int {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+	r.Mu.RLock()
+	defer r.Mu.RUnlock()
 	return len(r.peers)
 }
 
 func (r *Registry) GetStats() map[string]interface{} {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+	r.Mu.RLock()
+	defer r.Mu.RUnlock()
 
 	stats := map[string]interface{}{
 		"total_peers": len(r.peers),
@@ -224,7 +238,7 @@ func (r *Registry) GetStats() map[string]interface{} {
 	}
 
 	for _, peer := range r.peers {
-		peer.mu.RLock()
+		peer.Mu.RLock()
 		switch peer.State {
 		case PeerStateP2PConnected:
 			stats["p2p_connected"] = stats["p2p_connected"].(int) + 1
@@ -235,23 +249,23 @@ func (r *Registry) GetStats() map[string]interface{} {
 		case PeerStateHandshaking, PeerStateAuthenticated, PeerStateP2PGathering, PeerStateP2PChecking:
 			stats["active_peers"] = stats["active_peers"].(int) + 1
 		}
-		peer.mu.RUnlock()
+		peer.Mu.RUnlock()
 	}
 
 	return stats
 }
 
 func (r *Registry) CleanupInactivePeers(timeout time.Duration) int {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.Mu.Lock()
+	defer r.Mu.Unlock()
 
 	now := time.Now()
 	cleaned := 0
 
 	for peerID, peer := range r.peers {
-		peer.mu.RLock()
+		peer.Mu.RLock()
 		lastActivity := peer.LastActivity
-		peer.mu.RUnlock()
+		peer.Mu.RUnlock()
 
 		if now.Sub(lastActivity) > timeout {
 			if peer.Connection != nil {
@@ -266,8 +280,8 @@ func (r *Registry) CleanupInactivePeers(timeout time.Duration) int {
 }
 
 func (r *Registry) ListPeers() []string {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+	r.Mu.RLock()
+	defer r.Mu.RUnlock()
 
 	peerIDs := make([]string, 0, len(r.peers))
 	for peerID := range r.peers {

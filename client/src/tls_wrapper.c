@@ -32,26 +32,41 @@ static int sock_write(void *ctx, const unsigned char *buf, size_t len)
 	}
 }
 
+static int is_ip_address(const char *host) {
+    if (!host) return 0;
+    for (int i = 0; host[i]; i++) {
+        if (!((host[i] >= '0' && host[i] <= '9') || host[i] == '.' || host[i] == ':')) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int ph_tls_init(ph_tls_ctx_t *ctx, int socket_fd, const char *sni_domain)
 {
     if (!ctx || socket_fd < 0) return PH_ERR_NULL_PTR;
     memset(ctx, 0, sizeof(ph_tls_ctx_t));
     ctx->socket_fd = socket_fd;
 
-    // : Initialize with NO certificate verification for self-signed relay compatibility
+    // Initialize with NO certificate verification for self-signed relay compatibility
     br_ssl_client_init_full(&ctx->sc, &ctx->xc, NULL, 0);
     
     // Set engine buffer
     br_ssl_engine_set_buffer(&ctx->sc.eng, ctx->iobuf, sizeof(ctx->iobuf), 1);
     
-    // Reset client for SNI
-    br_ssl_client_reset(&ctx->sc, sni_domain ? sni_domain : PH_TLS_SNI_DOMAIN, 0);
+    // Reset client for SNI. Skip SNI if host is an IP address.
+    const char *target_sni = sni_domain;
+    if (!target_sni) target_sni = PH_TLS_SNI_DOMAIN;
+    if (is_ip_address(target_sni)) target_sni = NULL;
+
+    br_ssl_client_reset(&ctx->sc, target_sni, 0);
 
     // I/O initialization
     br_sslio_init(&ctx->ioc, &ctx->sc.eng, sock_read, &ctx->socket_fd, sock_write, &ctx->socket_fd);
 
     return PH_OK;
 }
+
 
 int ph_tls_handshake(ph_tls_ctx_t *ctx)
 {

