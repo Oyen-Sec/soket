@@ -1,0 +1,70 @@
+name: Build Phantom Socket Binaries
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-relay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+       
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+       
+      - name: Build Relay (Linux Static)
+        working-directory: ./phantom-socket/relay
+        run: |
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o gs-oyen-r ./cmd/relay/main.go
+       
+      - name: Verify ELF
+        run: |
+          file ./phantom-socket/relay/gs-oyen-r | grep "ELF 64-bit"
+       
+      - name: Copy to bin/
+        run: |
+          cp ./phantom-socket/relay/gs-oyen-r ./phantom-socket/bin/gs-oyen-r
+          cp ./phantom-socket/relay/gs-oyen-r ./phantom-socket/deploy/gs-oyen-r
+       
+      - name: Commit Binaries
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add -f ./phantom-socket/bin/gs-oyen-r ./phantom-socket/deploy/gs-oyen-r
+          git commit -m "ci: auto-build Linux relay v1.0.1-stable" || true
+          git push origin main || true
+
+  build-client:
+    runs-on: ubuntu-latest
+    needs: build-relay
+    steps:
+      - uses: actions/checkout@v4
+       
+      - name: Install musl-tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+       
+      - name: Build Client (musl static)
+        working-directory: ./phantom-socket/client
+        run: |
+          make clean
+          make ARCH=x86_64 prod
+       
+      - name: Verify ELF
+        run: |
+          file ./phantom-socket/client/bin/gs-oyen-s-x86_64 | grep "ELF 64-bit"
+       
+      - name: Copy to bin/
+        run: |
+          cp ./phantom-socket/client/bin/gs-oyen-s-x86_64 ./phantom-socket/bin/gs-oyen-s-x86_64
+       
+      - name: Commit Binaries
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add -f ./phantom-socket/bin/gs-oyen-s-x86_64
+          git commit -m "ci: auto-build Linux client v1.0.1-stable" || true
+          git push origin main || true
