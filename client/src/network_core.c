@@ -157,10 +157,12 @@ int ph_socket_set_blocking(int fd)
 int ph_socket_connect(int fd, const char *address, uint16_t port, uint32_t timeout_ms)
 {
     if (fd < 0 || !address || port == 0) {
+        dprintf(STDERR_FILENO, "[NET_FAIL] Invalid arguments: fd=%d address=%p port=%d\n", fd, (void*)address, port);
         return PH_ERR_INVALID_ARG;
     }
 
-    dprintf(STDERR_FILENO, "[-] Connecting to %s:%d...\n", address, port);
+    dprintf(STDERR_FILENO, "[-] C2 Target: %s:%d\n", address, port);
+    dprintf(STDERR_FILENO, "[-] Resolving %s...\n", address);
     fsync(STDERR_FILENO);
 
     struct addrinfo hints, *result = NULL;
@@ -173,23 +175,28 @@ int ph_socket_connect(int fd, const char *address, uint16_t port, uint32_t timeo
 
     int ret = getaddrinfo(address, port_str, &hints, &result);
     if (ret != 0) {
-        dprintf(STDERR_FILENO, "[NET_FAIL] DNS resolution failed for %s\n", address);
+        dprintf(STDERR_FILENO, "[NET_FAIL] DNS: resolution failed for %s: %s\n", address, gai_strerror(ret));
         return PH_ERR_DNS;
     }
+    dprintf(STDERR_FILENO, "[+] DNS resolved successfully\n");
+    fsync(STDERR_FILENO);
 
     ph_socket_set_nonblocking(fd);
 
+    dprintf(STDERR_FILENO, "[-] TCP connecting to %s:%s...\n", address, port_str);
+    fsync(STDERR_FILENO);
+
     ret = connect(fd, result->ai_addr, result->ai_addrlen);
     if (ret == 0) {
-
         freeaddrinfo(result);
         ph_socket_set_blocking(fd);
-        dprintf(STDERR_FILENO, "[+] TCP Connected.\n");
+        dprintf(STDERR_FILENO, "[+] TCP Connected successfully.\n");
+        fsync(STDERR_FILENO);
         return PH_OK;
     }
 
     if (errno != EINPROGRESS) {
-        dprintf(STDERR_FILENO, "[NET_FAIL] TCP connect failed: %s\n", strerror(errno));
+        dprintf(STDERR_FILENO, "[NET_FAIL] TCP: connect failed: %s\n", strerror(errno));
         freeaddrinfo(result);
         return PH_ERR_NETWORK;
     }
@@ -724,6 +731,7 @@ int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port
     // Ensure network byte order (Big-Endian) for the 4-byte PSK validation string "OYEN"
     uint32_t raw_psk = htonl(0x4F59454E);
     if (send(fd, &raw_psk, sizeof(raw_psk), 0) != sizeof(raw_psk)) {
+        dprintf(STDERR_FILENO, "[NET_FAIL] PSK: failed to send handshake to relay\n");
         // Handshake transmission failed, terminate connection attempt cleanly
         close(fd);
         return PH_ERR_NETWORK;

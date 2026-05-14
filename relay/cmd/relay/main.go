@@ -235,18 +235,31 @@ func startInteractiveConsole(registry *peer.Registry, cfg *config.Config) {
 		}
 
 		switch input {
-		case "help":
-			fmt.Println("Commands: list, interact <id>, exit")
-		case "list":
-			peers := registry.ListPeers()
-			fmt.Printf("Connected Agents (%d):\n", len(peers))
-			for _, p := range peers {
-				fmt.Printf(" - %s\n", p)
+		case "help", "?":
+			fmt.Println("Commands:")
+			fmt.Println("  sessions, list    - List all connected agents")
+			fmt.Println("  interact <id>     - Interact with specific agent")
+			fmt.Println("  help              - Show this help message")
+			fmt.Println("  exit, quit        - Shutdown relay server")
+		case "sessions", "list", "peers", "agents":
+			peers := registry.GetActivePeers()
+			if len(peers) == 0 {
+				fmt.Println("[*] No active agents.")
+			} else {
+				fmt.Printf("[*] %d active agent(s):\n", len(peers))
+				for _, p := range peers {
+					fmt.Printf("    [+] %s | %s\n", p.PeerID, p.RemoteAddr)
+				}
 			}
-		case "exit":
+		case "interact":
+			fmt.Println("[*] Interact command: specify agent ID")
+		case "exit", "quit":
+			fmt.Println("[*] Shutting down relay server...")
 			os.Exit(0)
 		default:
-			fmt.Printf("Unknown command: %s\n", input)
+			if input != "" {
+				fmt.Printf("[*] Unknown command: %s (type 'help' for commands)\n", input)
+			}
 		}
 		redrawPrompt()
 	}
