@@ -770,15 +770,17 @@ int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port
         close(fd);
         return PH_ERR_NETWORK;
     }
+    dprintf(STDERR_FILENO, "[+] PSK sent.\n");
 
     // Receive ACK (1 byte)
     uint8_t ack = 0;
     if (recv(fd, &ack, 1, 0) != 1 || ack != 0x01) {
-        dprintf(STDERR_FILENO, "[NET_FAIL] PSK rejected by relay\n");
+        dprintf(STDERR_FILENO, "[NET_FAIL] PSK rejected by relay (ACK=%d)\n", ack);
         close(fd);
         return PH_ERR_NETWORK;
     }
     dprintf(STDERR_FILENO, "[+] PSK accepted.\n");
+
 
 
     ctx->connection.socket_fd = fd;

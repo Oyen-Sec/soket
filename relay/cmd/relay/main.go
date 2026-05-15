@@ -178,6 +178,8 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		conn.Close()
 		return
 	}
+	logger.Printf("[+] PSK accepted from %s", remoteAddr)
+
 
 	// 2. TLS Upgrade
 	tlsConn := tls.Server(conn, relayTLSConfig)

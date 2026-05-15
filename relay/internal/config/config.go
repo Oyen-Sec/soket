@@ -43,7 +43,7 @@ type Config struct {
 func DefaultConfig() *Config {
 	return &Config{
 		ListenAddr:           DefaultListenAddr,
-		ServerName:           "oyen-sce.serveblog.net",
+		ServerName:           "oyen-sc.serveblog.net",
 		MaxPeers:             MaxPeers,
 		HandshakeTimeout:     60,
 		SessionTimeout:       3600,
