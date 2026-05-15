@@ -6,7 +6,6 @@ package main
 
 import (
 	"crypto/tls"
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"io"
@@ -18,6 +17,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
 
 	"github.com/soket-io/gs-oyen-r/internal/config"
 	"github.com/soket-io/gs-oyen-r/internal/crypto"
@@ -165,12 +165,13 @@ func handleConnection(conn net.Conn, registry *peer.Registry, cfg *config.Config
 		return
 	}
 
-	if binary.BigEndian.Uint32(pskBuf) != 0x4F59454E { // "OYEN"
-		logger.Printf("[!] PSK Mismatch from %s", remoteAddr)
+	if string(pskBuf) != "OYEN" {
+		logger.Printf("[!] PSK Mismatch from %s (got: %x)", remoteAddr, pskBuf)
 		conn.Write([]byte{0}) // Reject
 		conn.Close()
 		return
 	}
+
 
 	// Send ACK '1'
 	if _, err := conn.Write([]byte{1}); err != nil {

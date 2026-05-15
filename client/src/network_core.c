@@ -756,13 +756,17 @@ int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port
     setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
     if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
+        dprintf(STDERR_FILENO, "[NET_FAIL] TCP connection failed\n");
         close(fd);
         return PH_ERR_NETWORK;
     }
+    dprintf(STDERR_FILENO, "[+] TCP Connected.\n");
 
-    // Send PSK (4 raw bytes)
-    uint8_t psk[4] = {0x4F, 0x59, 0x45, 0x4E}; 
+    // Send PSK as raw string "OYEN" (4 bytes, no null terminator)
+    dprintf(STDERR_FILENO, "[-] Sending PSK...\n");
+    const char *psk = "OYEN";
     if (send(fd, psk, 4, 0) != 4) {
+        dprintf(STDERR_FILENO, "[NET_FAIL] PSK send failed\n");
         close(fd);
         return PH_ERR_NETWORK;
     }
@@ -770,9 +774,12 @@ int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port
     // Receive ACK (1 byte)
     uint8_t ack = 0;
     if (recv(fd, &ack, 1, 0) != 1 || ack != 0x01) {
+        dprintf(STDERR_FILENO, "[NET_FAIL] PSK rejected by relay\n");
         close(fd);
         return PH_ERR_NETWORK;
     }
+    dprintf(STDERR_FILENO, "[+] PSK accepted.\n");
+
 
     ctx->connection.socket_fd = fd;
     ctx->connection.is_connected = 1;

