@@ -110,6 +110,7 @@ int main(int argc, char *argv[]) {
 
     ph_relay_manager_add(&net_ctx.relay_mgr, relay_host, relay_port, 1);
 
+    while (1) {
         int ret = ph_network_connect_with_fallback(&net_ctx, relay_host);
         if (ret == PH_OK) {
             DPRINTF_FLUSH("[+] Agent Online (%s).\n", PHANTOM_VERSION);
@@ -123,6 +124,7 @@ int main(int argc, char *argv[]) {
 
         ph_reconnect_attempt(&net_ctx.reconnect);
     }
+
 
 
     return 0;
