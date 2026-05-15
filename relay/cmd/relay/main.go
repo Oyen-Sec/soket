@@ -114,13 +114,12 @@ func main() {
 
 	registry := peer.NewRegistry()
 
-	// Multi-port listening
-	ports := []string{":8443", ":443", ":8080", ":80", ":53", ":123"}
+	// Multi-port listening (non-privileged only)
+	ports := []string{":8443", ":8080", ":1337", ":42291"}
 	for _, port := range ports {
 		go func(p string) {
 			listener, err := net.Listen("tcp", p)
 			if err != nil {
-				// Don't fatal here, other ports might work
 				logger.Printf("[!] Failed to bind %s: %v", p, err)
 				return
 			}
@@ -134,6 +133,7 @@ func main() {
 			}
 		}(port)
 	}
+
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)

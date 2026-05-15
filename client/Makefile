@@ -82,7 +82,7 @@ _CFLAGS += -fno-ident -fno-asynchronous-unwind-tables -fno-unwind-tables
 _CFLAGS += -fomit-frame-pointer
 _CFLAGS += -fno-stack-protector -fmerge-all-constants -funsigned-char
 _CFLAGS += -flto
-_CFLAGS += -Wall -Wextra -Werror=return-type -Werror=implicit-function-declaration
+_CFLAGS += -Wall -Wextra -Werror -Werror=return-type -Werror=implicit-function-declaration
 _CFLAGS += -I$(INCDIR) -I$(LIBDIR)/monocypher -I$(LIBDIR)/bearssl/inc -I$(ARCHDIR)
 _CFLAGS += -D_GNU_SOURCE -D_POSIX_C_SOURCE=200809L
 _CFLAGS += -DNDEBUG -D_FORTIFY_SOURCE=0

