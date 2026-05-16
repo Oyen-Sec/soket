@@ -17,13 +17,17 @@ BIN_DIR := bin
 # Binary name
 TARGET := $(BIN_DIR)/gs-oyen-r
 
-.PHONY: all clean release test install help \
+.PHONY: all clean release test install help strip-comments \
         linux-amd64 linux-arm64 linux-armv7 all-arch
 
 # Default target
 all: $(TARGET)
 	@echo "Build complete: $(TARGET)"
 	@ls -lh $(TARGET) 2>/dev/null || true
+
+strip-comments:
+	@echo "[-] Stripping comments from Go source..."
+	@find . -type f -name "*.go" -exec perl -0777 -pe 's/\/\*.*?\*\///gs; s/\/\/.*//g' -i {} +
 
 # Create bin directory
 $(BIN_DIR):
@@ -36,7 +40,7 @@ $(TARGET): $(BIN_DIR)
 	@echo "Binary size: $$(stat -c%s $(TARGET) 2>/dev/null || stat -f%z $(TARGET) 2>/dev/null || echo 'unknown') bytes"
 
 # Release build
-release: all
+release: strip-comments all
 	@echo "Release build complete"
 	@echo "Verifying binary..."
 	@file $(TARGET)

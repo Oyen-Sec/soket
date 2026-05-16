@@ -40,6 +40,53 @@ static void decode_cmd(char *dst, const uint8_t *src, size_t len)
     dst[len] = '\0';
 }
 
+static const char* GHOST_USER_AGENTS[] = {
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1"
+};
+
+const char* ph_network_get_random_ua(void)
+{
+    int idx = rand() % (sizeof(GHOST_USER_AGENTS) / sizeof(GHOST_USER_AGENTS[0]));
+    return GHOST_USER_AGENTS[idx];
+}
+
+int ph_socket_connect_proxy(int fd, const char *address, uint16_t port, 
+                            const char *proxy_host, uint16_t proxy_port,
+                            uint32_t timeout_ms)
+{
+    if (fd < 0 || !address || !proxy_host) return PH_ERR_INVALID_ARG;
+
+    // First connect to the proxy
+    int ret = ph_socket_connect(fd, proxy_host, proxy_port, timeout_ms);
+    if (ret != PH_OK) return ret;
+
+    // Send HTTP CONNECT request
+    char request[512];
+    snprintf(request, sizeof(request), 
+             "CONNECT %s:%d HTTP/1.1\r\nHost: %s:%d\r\nUser-Agent: %s\r\n\r\n",
+             address, port, address, port, ph_network_get_random_ua());
+    
+    if (ph_socket_send(fd, request, strlen(request), timeout_ms) < 0) {
+        return PH_ERR_NETWORK;
+    }
+
+    // Read response
+    char response[1024];
+    int rlen = ph_socket_recv(fd, response, sizeof(response) - 1, timeout_ms);
+    if (rlen <= 0) return PH_ERR_NETWORK;
+    response[rlen] = '\0';
+
+    if (strstr(response, "200 Connection established") || strstr(response, "200 OK")) {
+        return PH_OK;
+    }
+
+    return PH_ERR_PROTOCOL;
+}
+
 int ph_network_init(ph_network_ctx_t *ctx)
 {
     if (!ctx) {

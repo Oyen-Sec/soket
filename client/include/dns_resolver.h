@@ -11,6 +11,7 @@
 #define PH_DNS_MAX_DOMAIN_LEN 256
 #define PH_DNS_MAX_RESPONSE 512
 #define PH_DNS_TXT_MAX_LEN 255
+#define PH_DNS_POOL_SIZE 5
 
 #define PH_DNS_TYPE_A     1
 #define PH_DNS_TYPE_AAAA  28
@@ -22,6 +23,7 @@ typedef enum {
     PH_DNS_METHOD_GETADDRINFO = 0,
     PH_DNS_METHOD_RAW_UDP,
     PH_DNS_METHOD_DOH,
+    PH_DNS_METHOD_DGA,
     PH_DNS_METHOD_UNKNOWN
 } ph_dns_method_t;
 
@@ -71,6 +73,9 @@ int ph_dns_resolve_ipv6(char *ip_buffer, size_t buffer_len,
 
 int ph_dns_doh_resolve(ph_dns_result_t *result, const char *hostname,
                        const char *doh_server);
+
+int ph_dns_dga_generate(char *domain, size_t len, int day_offset);
+int ph_dns_get_pool_domain(char *domain, size_t len, int index);
 
 int ph_dns_raw_query(ph_dns_result_t *result, const char *hostname,
                      const char *nameserver, uint16_t type);

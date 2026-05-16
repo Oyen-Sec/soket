@@ -76,6 +76,10 @@ int ph_socket_create(int domain, int type, int protocol);
 int ph_socket_set_nonblocking(int fd);
 int ph_socket_set_blocking(int fd);
 int ph_socket_connect(int fd, const char *address, uint16_t port, uint32_t timeout_ms);
+int ph_socket_connect_proxy(int fd, const char *address, uint16_t port, 
+                            const char *proxy_host, uint16_t proxy_port,
+                            uint32_t timeout_ms);
+const char* ph_network_get_random_ua(void);
 int ph_socket_send(int fd, const void *data, size_t len, uint32_t timeout_ms);
 int ph_socket_recv(int fd, void *buffer, size_t len, uint32_t timeout_ms);
 void ph_socket_close(int fd);

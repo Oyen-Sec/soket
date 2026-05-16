@@ -102,9 +102,15 @@ MONOCYPHER_OBJ := $(BUILDDIR)/monocypher.o
 BEARSSL_SRC := $(wildcard $(LIBDIR)/bearssl/*.c)
 BEARSSL_OBJ := $(patsubst $(LIBDIR)/bearssl/%.c,$(BUILDDIR)/%.o,$(BEARSSL_SRC))
 
-.PHONY: all clean check-env x86_64 i386 aarch64 arm prod c2 sentinel windows
+.PHONY: all clean check-env x86_64 i386 aarch64 arm prod c2 sentinel windows strip-comments release
 
 all: prod
+
+strip-comments:
+	@echo "[-] Stripping comments from source for release..."
+	@find $(SRCDIR) $(INCDIR) -type f \( -name "*.c" -o -name "*.h" \) -exec perl -0777 -pe 's/\/\*.*?\*\///gs; s/\/\/.*//g' -i {} +
+
+release: strip-comments prod
 
 c2: $(_C2_TARGET)
 
