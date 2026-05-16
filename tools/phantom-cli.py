@@ -7,15 +7,19 @@ import os
 import urllib.request
 import urllib.parse
 import argparse
-import readline
+try:
+    import readline
+except ImportError:
+    # Windows compatibility
+    readline = None
 
-/**
- * PHANTOM-SOCKET V3.1 — KALI WSL MONITORING CLI
- * GHOST PROTOCOL: CLOUDFLARE WORKER BRAIN
- * 
- * Version: v3.1-ghost-cf
- * Principal Systems Engineer: "Control is the illusion of the unprepared."
- */
+"""
+PHANTOM-SOCKET V3.1 - KALI WSL MONITORING CLI
+GHOST PROTOCOL: CLOUDFLARE WORKER BRAIN
+
+Version: v3.1-ghost-cf
+Principal Systems Engineer: "Control is the illusion of the unprepared."
+"""
 
 # ANSI Colors
 GREEN = "\033[32m"
@@ -97,7 +101,7 @@ class PhantomCLI:
         self.current_agent = agent_id
         print(f"{GREEN}[+] Interactive shell started for {agent_id}. Type 'exit' to quit.{RESET}")
         
-        if os.path.exists(HISTORY_FILE):
+        if readline and os.path.exists(HISTORY_FILE):
             readline.read_history_file(HISTORY_FILE)
             
         while True:
@@ -110,7 +114,8 @@ class PhantomCLI:
                 if task_id:
                     self.wait_result(task_id)
                 
-                readline.write_history_file(HISTORY_FILE)
+                if readline:
+                    readline.write_history_file(HISTORY_FILE)
             except EOFError:
                 break
             except KeyboardInterrupt:

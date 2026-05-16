@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static void port_to_string(char *buf, size_t buf_len, uint16_t port)
 {

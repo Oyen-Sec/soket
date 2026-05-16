@@ -9,7 +9,7 @@ echo "[-] Starting Integration Test for Ghost Agent...\n";
 
 // 1. Test: Zero File Drop (Write to non-existent file should fail)
 echo "[ ] Testing Zero File Drop Guard... ";
-$res = ghost_overwrite_file('non_existent.php', base64_encode('test'));
+$res = ghost_write_file('non_existent.php', base64_encode('test'));
 if (strpos($res, 'ERROR: NO_FILE_DROP') !== false) {
     echo "PASS\n";
 } else {
@@ -21,7 +21,7 @@ $test_file = __DIR__ . '/test_target.php';
 file_put_contents($test_file, "<?php // original ?>");
 echo "[ ] Testing Overwrite Existing File... ";
 $new_content = "<?php // overwritten ?>";
-$res = ghost_overwrite_file($test_file, base64_encode($new_content));
+$res = ghost_write_file($test_file, base64_encode($new_content));
 if (strpos($res, 'SUCCESS') !== false && file_get_contents($test_file) === $new_content) {
     echo "PASS\n";
 } else {
@@ -39,7 +39,18 @@ if (strpos($res, 'SUCCESS') !== false && strpos($current, $payload) === 0) {
     echo "FAIL: $res\n";
 }
 
-// 4. Test: Command Execution (ob_start capture)
+// 4. Test: PHP Injection (Append)
+echo "[ ] Testing PHP Injection (Append)... ";
+$payload_append = "<?php // append ?>";
+$res = ghost_inject_php($test_file, base64_encode($payload_append), 'append');
+$current = file_get_contents($test_file);
+if (strpos($res, 'SUCCESS') !== false && substr($current, -strlen($payload_append)) === $payload_append) {
+    echo "PASS\n";
+} else {
+    echo "FAIL: $res\n";
+}
+
+// 5. Test: Command Execution (ob_start capture)
 echo "[ ] Testing Command Execution (whoami)... ";
 $out = ghost_exec('whoami');
 if (!empty($out)) {

