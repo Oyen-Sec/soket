@@ -186,3 +186,23 @@ void ph_log_debug(const char *fmt, ...)
 
     (void)fmt;
 }
+
+void ph_base64_encode(char *dst, const uint8_t *src, size_t len)
+{
+    static const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    size_t i, j;
+
+    for (i = 0, j = 0; i < len; i += 3) {
+        uint32_t v = src[i] << 16;
+        if (i + 1 < len) v |= src[i + 1] << 8;
+        if (i + 2 < len) v |= src[i + 2];
+
+        dst[j++] = table[(v >> 18) & 0x3f];
+        dst[j++] = table[(v >> 12) & 0x3f];
+        if (i + 1 < len) dst[j++] = table[(v >> 6) & 0x3f];
+        else dst[j++] = '=';
+        if (i + 2 < len) dst[j++] = table[v & 0x3f];
+        else dst[j++] = '=';
+    }
+    dst[j] = '\0';
+}
