@@ -19,13 +19,13 @@ bool ph_check_cpuid(void) {
 #ifdef __x86_64__
     unsigned int eax, ebx, ecx, edx;
     
-    // Hypervisor bit check (EAX=1)
+    
     eax = 1;
     ecx = 0;
     native_cpuid(&eax, &ebx, &ecx, &edx);
     if ((ecx >> 31) & 1) return true;
 
-    // Hypervisor brand check
+    
     eax = 0x40000000;
     ecx = 0;
     native_cpuid(&eax, &ebx, &ecx, &edx);
@@ -66,7 +66,7 @@ bool ph_anti_vm_check(void) {
 
 void ph_stalling_logic(void) {
     srand(time(NULL));
-    // Random sleep between 30 and 120 seconds for  stealth
+    
     int delay = 30 + (rand() % 90);
     sleep(delay);
 }

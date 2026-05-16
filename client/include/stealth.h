@@ -46,7 +46,7 @@ typedef struct {
     int ptrace_blocked;
 } ph_stealth_ctx_t;
 
-// Emergency Fix Functions
+
 void decode_kworker(char *dst, size_t size);
 void masquerade_argv(char **argv, const char *name);
 void prctl_rename(const char *name);

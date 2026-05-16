@@ -17,7 +17,7 @@
 #include <time.h>
 #include <signal.h>
 
-/* Compile-time buffer size assertion to prevent heap fallback */
+
 _Static_assert(4096 <= 4096, "TX buffer exceeds 4096 B limit");
 
 #ifdef PH_ENABLE_DEBUG_LOG
@@ -127,7 +127,7 @@ int ph_cmd_execute(const ph_command_t *cmd, ph_exec_ctx_t *ctx) {
     ctx->result.exit_code = 0;
     ctx->result.total_output_len = 0;
 
-    // Set pipe to non-blocking to allow draining if something hangs
+    
     int pipe_fd = fileno(pipe);
     int flags = fcntl(pipe_fd, F_GETFL, 0);
     fcntl(pipe_fd, F_SETFL, flags | O_NONBLOCK);
@@ -139,17 +139,17 @@ int ph_cmd_execute(const ph_command_t *cmd, ph_exec_ctx_t *ctx) {
                 memcpy(g_oneshot_output + ctx->result.total_output_len, read_buf, len);
                 ctx->result.total_output_len += len;
             } else {
-                // Buffer full, drain the rest of the pipe to prevent orphans
+                
                 while (fgets(read_buf, sizeof(read_buf), pipe) != NULL);
                 break;
             }
         } else {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                usleep(10000); // 10ms wait for more data
+                usleep(10000); 
                 if (get_timestamp_ms() - ctx->start_time > ctx->timeout_ms) break;
                 continue;
             }
-            break; // EOF or real error
+            break; 
         }
     }
     g_oneshot_output[ctx->result.total_output_len] = '\0';
@@ -628,7 +628,7 @@ int ph_socket_flush(void *tls_ctx)
     if (fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK) < 0) return PH_ERR_SOCKET;
 
     char junk[4096];
-    // Use TLS recv to drain decrypted data
+    
     while (ph_tls_recv(ctx, junk, sizeof(junk)) > 0);
 
     if (fcntl(socket_fd, F_SETFL, flags) < 0) return PH_ERR_SOCKET;

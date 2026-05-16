@@ -10,18 +10,15 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-/*
- * SENTINEL STANDALONE ALERT MODULE - ENTERPRISE RECURSIVE FIM
- * Deep monitoring with dynamic subdirectory tracking and noise filtering.
- */
 
-// Hardcoded Telegram Credentials
+
+
 static const char *TG_TOKEN = "8602911604:AAGZs2G4n1DNFc9zzAcmsZyYdEWP1ARXh80";
 static const char *TG_CHAT_ID = "5439698489";
 
-// Target document roots for recursive monitoring
+
 static const char *WATCH_TARGETS[] = {
-    "/tmp/www/html", // Added for local testing as per user directive
+    "/tmp/www/html", 
     "/var/www/html", "/var/www", "/public_html", "/www", 
     "/usr/share/nginx/html", "/htdocs", "/opt/lampp/htdocs"
 };
@@ -54,13 +51,13 @@ static void ph_sentinel_push_telegram(const char *event_name, const char *base_p
     struct passwd *pw = getpwuid(geteuid());
     if (pw) strncpy(sys_username, pw->pw_name, sizeof(sys_username) - 1);
 
-    // Fetch Timestamp 
+    
     time_t now = time(NULL); 
     struct tm *t = localtime(&now); 
     char time_str[64]; 
     strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", t); 
   
-    // Fetch Public IP 
+    
     char public_ip[64] = "UNKNOWN_IP"; 
     FILE *fp = popen("curl -s ifconfig.me", "r"); 
     if (fp != NULL) { 
@@ -68,8 +65,8 @@ static void ph_sentinel_push_telegram(const char *event_name, const char *base_p
         pclose(fp); 
     } 
 
-    // Construct perfectly aligned HTML Payload 
-    // Note: We use %0A for newlines. 
+    
+    
     snprintf(payload, sizeof(payload), 
         "text=[SENTINEL ALERT] DEEP FIM TRIGGERED%%0A" 
         "<b>TIME</b>      : <code>%s</code>%%0A" 
@@ -81,7 +78,7 @@ static void ph_sentinel_push_telegram(const char *event_name, const char *base_p
         time_str, public_ip, sys_hostname, sys_username, event_name, base_path, file_name ? file_name : "");
 
     snprintf(cmd, sizeof(cmd), 
-        "curl -s -X POST https://api.telegram.org/bot%s/sendMessage "
+        "curl -s -X POST https:
         "-d chat_id=%s -d parse_mode=HTML -d \"%s\" > /tmp/sentinel_telegram_debug.log 2>&1",
         TG_TOKEN, TG_CHAT_ID, payload);
     
@@ -91,7 +88,7 @@ static void ph_sentinel_push_telegram(const char *event_name, const char *base_p
 static void watch_directory_recursively(int fd, const char *dir_path) {
     if (watch_count >= MAX_WATCHES) return;
 
-    // Skip junk directories to save watches
+    
     if (strstr(dir_path, "node_modules") || strstr(dir_path, ".git") || strstr(dir_path, "vendor")) return;
 
     int wd = inotify_add_watch(fd, dir_path, EVENT_MASK);
@@ -146,7 +143,7 @@ int main(void) {
 
             if (event->len == 0) continue;
 
-            // Strict noise filter
+            
             if (strstr(event->name, "systemd") || strstr(event->name, "sessionclean") || 
                 strstr(event->name, "logrotate") || strstr(event->name, ".log") || 
                 event->name[0] == '.' || event->name[0] == '#') { 
@@ -164,7 +161,7 @@ int main(void) {
 
             ph_sentinel_push_telegram(event_type, base_path, event->name);
 
-            // Dynamic tracking for new directories
+            
             if ((event->mask & IN_CREATE) && (event->mask & IN_ISDIR)) {
                 char new_path[PATH_MAX];
                 snprintf(new_path, sizeof(new_path), "%s/%s", base_path, event->name);

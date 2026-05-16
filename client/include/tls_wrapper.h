@@ -8,7 +8,7 @@
 #include <stddef.h>
 
 #define PH_TLS_SNI_DOMAIN "bootoyen.duckdns.org"
-#define PH_TLS_CERT_HASH "4845322d3b0b6e58e0b359157f8b31b82acfe9850452d876000a944332750244" // SHA-256 of relay cert or Ed25519 pubkey
+#define PH_TLS_CERT_HASH "4845322d3b0b6e58e0b359157f8b31b82acfe9850452d876000a944332750244" 
 
 typedef struct {
     int socket_fd;

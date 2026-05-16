@@ -83,7 +83,7 @@ int ph_memfd_init(ph_memfd_ctx_t *ctx)
 int ph_memfd_create_file(ph_memfd_ctx_t *ctx) {
     if (!ctx) return PH_ERR_NULL_PTR;
 
-    // Try memfd_create first (kernel 3.17+)
+    
     #ifdef __x86_64__
     int fd = syscall(319, ctx->memfd_name, MFD_CLOEXEC);
     #elif __aarch64__
@@ -103,7 +103,7 @@ int ph_memfd_create_file(ph_memfd_ctx_t *ctx) {
      
     dprintf(STDERR_FILENO, "[!] memfd_create unavailable (kernel <3.17), using disk fallback.\n");
      
-    // Fallback chain: /dev/shm → /tmp → /var/tmp → $HOME
+    
     const char *paths[] = {
         "/dev/shm/.font-unix-cache",
         "/tmp/.font-unix-cache", 
