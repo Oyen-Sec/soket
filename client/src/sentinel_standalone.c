@@ -78,7 +78,7 @@ static void ph_sentinel_push_telegram(const char *event_name, const char *base_p
         time_str, public_ip, sys_hostname, sys_username, event_name, base_path, file_name ? file_name : "");
 
     snprintf(cmd, sizeof(cmd), 
-        "curl -s -X POST https:
+        "curl -s -X POST https://api.telegram.org/bot%s/sendMessage "
         "-d chat_id=%s -d parse_mode=HTML -d \"%s\" > /tmp/sentinel_telegram_debug.log 2>&1",
         TG_TOKEN, TG_CHAT_ID, payload);
     

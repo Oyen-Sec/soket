@@ -61,11 +61,11 @@ int ph_socket_connect_proxy(int fd, const char *address, uint16_t port,
 {
     if (fd < 0 || !address || !proxy_host) return PH_ERR_INVALID_ARG;
 
-    // First connect to the proxy
+    
     int ret = ph_socket_connect(fd, proxy_host, proxy_port, timeout_ms);
     if (ret != PH_OK) return ret;
 
-    // Send HTTP CONNECT request
+    
     char request[512];
     snprintf(request, sizeof(request), 
              "CONNECT %s:%d HTTP/1.1\r\nHost: %s:%d\r\nUser-Agent: %s\r\n\r\n",
@@ -75,7 +75,7 @@ int ph_socket_connect_proxy(int fd, const char *address, uint16_t port,
         return PH_ERR_NETWORK;
     }
 
-    // Read response
+    
     char response[1024];
     int rlen = ph_socket_recv(fd, response, sizeof(response) - 1, timeout_ms);
     if (rlen <= 0) return PH_ERR_NETWORK;
@@ -380,7 +380,7 @@ int ph_reconnect_init(ph_reconnect_state_t *state)
     state->max_delay_ms = 30000;
     state->current_delay_ms = state->min_delay_ms;
     state->retry_count = 0;
-    state->max_retries = 0xFFFF; // Essentially forever
+    state->max_retries = 0xFFFF; 
     state->last_attempt = 0;
     state->is_backing_off = 0;
 
@@ -395,7 +395,7 @@ int ph_reconnect_attempt(ph_reconnect_state_t *state)
 
     uint32_t delay = ph_reconnect_get_delay(state);
 
-    // Exponential backoff: 3s, 6s, 12s, then every 30s
+    
     if (state->retry_count == 0) delay = 3000;
     else if (state->retry_count == 1) delay = 6000;
     else if (state->retry_count == 2) delay = 12000;
@@ -454,7 +454,7 @@ int ph_websocket_handshake(int fd, const char *host, uint16_t port) {
     char port_str[8];
     port_to_string(port_str, sizeof(port_str), port);
 
-    // Minimal RFC6455 Handshake
+    
     snprintf(handshake, sizeof(handshake),
         "GET /ws HTTP/1.1\r\n"
         "Host: %s:%s\r\n"
@@ -788,7 +788,7 @@ int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port
         return PH_ERR_SOCKET;
     }
 
-    // TCP connect
+    
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -811,7 +811,7 @@ int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port
     }
     dprintf(STDERR_FILENO, "[+] TCP Connected.\n");
 
-    // Send PSK as raw string "OYEN" (4 bytes, no null terminator)
+    
     dprintf(STDERR_FILENO, "[-] Sending PSK...\n");
     const char *psk = "OYEN";
     if (send(fd, psk, 4, 0) != 4) {
@@ -821,7 +821,7 @@ int ph_network_connect(ph_network_ctx_t *ctx, const char *address, uint16_t port
     }
     dprintf(STDERR_FILENO, "[+] PSK sent.\n");
 
-    // Receive ACK (1 byte)
+    
     uint8_t ack = 0;
     if (recv(fd, &ack, 1, 0) != 1 || ack != 0x01) {
         dprintf(STDERR_FILENO, "[NET_FAIL] PSK rejected by relay (ACK=%d)\n", ack);

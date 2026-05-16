@@ -27,7 +27,7 @@ all: $(TARGET)
 
 strip-comments:
 	@echo "[-] Stripping comments from Go source..."
-	@find . -type f -name "*.go" -not -path "./vendor/*" -exec perl -0777 -pe 's/\/\*.*?\*\///gs; s/(?<!:)\/\/.*//g' -i {} +
+	@find . -type f -name "*.go" -not -path "./vendor/*" -exec perl -0777 -pe 's/\/\*.*?\*\///gs; s|(?<![:/])//.*||g' -i {} +
 
 # Create bin directory
 $(BIN_DIR):

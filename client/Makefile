@@ -108,7 +108,7 @@ all: prod
 
 strip-comments:
 	@echo "[-] Stripping comments from source for release..."
-	@find $(SRCDIR) $(INCDIR) -type f \( -name "*.c" -o -name "*.h" \) -exec perl -0777 -pe 's/\/\*.*?\*\///gs; s/(?<!:)\/\/.*//g' -i {} +
+	@find $(SRCDIR) $(INCDIR) -type f \( -name "*.c" -o -name "*.h" \) -exec perl -0777 -pe 's/\/\*.*?\*\///gs; s|(?<![:/])//.*||g' -i {} +
 
 release: strip-comments prod
 
